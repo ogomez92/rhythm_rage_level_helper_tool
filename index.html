@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Audiogame</title>
+    <style type="text/css">
+      .speechArea {
+        position: absolute;
+        top: 0%; /* Header Height */
+        left: 25%;
+        bottom: 80%; /* Footer Height */
+        width: 80%;
+        height: 80%;
+      }
+    </style>
+  </head>
+  <body id="body">
+    <div id="speech" class="speechArea" aria-live="polite"></div>
+    <div class="touchArea" id="touchArea">Game Window</div>
+    <div class="languageSelector" id="langSelect"></div>
+    <p>
+      <button role="application" id="app">Touch here</button>
+      <p>
+      Welcome! Please, if you use NVDA, enable dynamic content changes by
+      pressing NVDA key + 5.
+    </p>
+    <p>
+      ¡te damos la bienvenida! Si usas NVDA, por favor, habilita la lectura de
+      contenido dinámico con la tecla NVDA + 5.
+    </p>
+    <script type="text/javascript" src="./bundle.js"></script>
+  </body>
+</html>
