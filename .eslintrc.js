@@ -1,4 +1,4 @@
-import path from 'path';
+const path = require('path');
 
 module.exports = {
   env: {
@@ -14,7 +14,8 @@ module.exports = {
   settings: {
     'import/resolver': {
       alias: {
-        map: [['@src', path.resolve(__dirname, 'src')]]
+        map: [['@src', path.resolve(__dirname, 'src')]],
+        map: [['@lib', path.resolve(__dirname, 'src', 'lib')]]
       }
     }
   },

@@ -30,6 +30,7 @@
   "dependencies": {
     "@electron/remote": "^2.0.9",
     "dotenv": "^16.0.3",
-    "electron": "^22.0.0"
+    "electron": "^22.0.0",
+    "eslint-config-airbnb-base": "^15.0.0"
   }
 }
