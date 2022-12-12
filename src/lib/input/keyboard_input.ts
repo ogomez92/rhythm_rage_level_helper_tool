@@ -1,15 +1,19 @@
 import KeyboardKey from "@lib/input/enums/keyboard_key";
 
 class KeyboardInput {
-    private _keys: Map<KeyboardKey, boolean>;
     private _keysDown: Map<KeyboardKey, boolean>;
     private _keysUp: Map<KeyboardKey, boolean>;
+    private isInitialized = false;
 
     constructor() {
-        this._keys = new Map();
         this._keysDown = new Map();
         this._keysUp = new Map();
 
+        this.setupKeyboardEvents();
+    }
+
+    private setupKeyboardEvents() {
+        this.isInitialized = true;
         document.addEventListener("keydown", (event: KeyboardEvent) => {
             this.onKeyDown(event.key as unknown as KeyboardKey);
         });
@@ -27,6 +31,8 @@ class KeyboardInput {
         this._keysUp.forEach((value, key) => {
             this._keysUp.set(key, false);
         });
+
+        this.setupKeyboardEvents();
     }
 
     public onKeyUp(key: KeyboardKey): void {
@@ -40,22 +46,44 @@ class KeyboardInput {
     }
 
     public isDown(key: KeyboardKey): boolean {
-        return this._keys.get(key) || false;
+        if (!this.isInitialized) {
+            this.reset();
+            this.setupKeyboardEvents();
+        }
+
+        return this._keysDown.get(key) || false;
     }
 
     public isUp(key: KeyboardKey): boolean {
-        return !this._keys.get(key) || false;
+        if (!this.isInitialized) {
+            this.reset();
+            this.setupKeyboardEvents();
+        }
+
+        return !this._keysUp.get(key) || false;
     }
 
     public isPressed(key: KeyboardKey): boolean {
+        if (!this.isInitialized) {
+            this.reset();
+            this.setupKeyboardEvents();
+        }
+
         return this._keysDown.get(key) || false;
     }
 
     public isReleased(key: KeyboardKey): boolean {
+        if (!this.isInitialized) {
+            this.reset();
+            this.setupKeyboardEvents();
+        }
+
         return this._keysUp.get(key) || false;
     }
 
     public destroy = () => {
+        this.isInitialized = false;
+        
         document.removeEventListener("keydown", (event: KeyboardEvent) => {
             this.onKeyDown(event.key as unknown as KeyboardKey);
         });
