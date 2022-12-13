@@ -1,4 +1,6 @@
-class AriaSpeechEngine {
+import SpeechEngine from "@lib/speech/interfaces/speech_engine";
+
+class AriaSpeechEngine implements SpeechEngine{
     private HTMLElement: HTMLDivElement;
     private lastSpokenString: string;
 
@@ -20,6 +22,8 @@ class AriaSpeechEngine {
 
         this.HTMLElement.innerText = text;
     }
+
+    public stop = () => this.HTMLElement.innerText = ''
 }
 
 export default AriaSpeechEngine;
