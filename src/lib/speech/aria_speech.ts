@@ -14,7 +14,7 @@ class AriaSpeechEngine {
     }
 
     speak(text: string) {
-        if (text == this.lastSpokenString && text !== '') {
+        if (text === this.lastSpokenString && text !== '') {
             this.speak('');
         }
 

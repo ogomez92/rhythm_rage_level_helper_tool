@@ -1,11 +1,15 @@
 import KeyboardKey from "@lib/input/enums/keyboard_key";
+import EventManager from "@lib/events/event_manager";
+import EventType from "@lib/events/enums/event_type";
 
-class KeyboardInput {
+class KeyboardInput extends EventManager{
     private _keysDown: Map<KeyboardKey, boolean>;
     private _keysUp: Map<KeyboardKey, boolean>;
     private isInitialized = false;
 
     constructor() {
+        super();
+
         this._keysDown = new Map();
         this._keysUp = new Map();
 
@@ -35,14 +39,18 @@ class KeyboardInput {
         this.setupKeyboardEvents();
     }
 
-    public onKeyUp(key: KeyboardKey): void {
+    private onKeyUp(key: KeyboardKey): void {
         this._keysDown.set(key, false);
         this._keysUp.set(key, true);
+
+        this.notify(EventType.KEYBOARD_KEY_RELEASED, key as never)
     }
 
-    public onKeyDown(key: KeyboardKey): void {
+    private onKeyDown(key: KeyboardKey): void {
         this._keysDown.set(key, true);
         this._keysUp.set(key, false);
+
+        this.notify(EventType.KEYBOARD_KEY_PRESSED, key as never)
     }
 
     public isDown(key: KeyboardKey): boolean {

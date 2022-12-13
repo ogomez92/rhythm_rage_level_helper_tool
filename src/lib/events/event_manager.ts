@@ -3,7 +3,7 @@ import EventSubscriber from "@lib/events/interfaces/event_subscriber";
 import EventNotification from "@lib/events/interfaces/event_notification";
 
 class EventManager {
-    private listeners: Map<EventType, EventSubscriber[]>;
+    private listeners: Map<EventType, EventSubscriber[]> = new Map();
 
     public subscribe(type: EventType, subscriber: EventSubscriber) {
         if (!this.listeners.has(type)) {
@@ -12,6 +12,7 @@ class EventManager {
 
         this.listeners.get(type).push(subscriber);
     }
+    
     public unsubscribe(type: EventType, subscriber: EventSubscriber) {
         if (!this.listeners.has(type)) {
             return;
