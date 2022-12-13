@@ -1,30 +1,39 @@
-import * as dotenv from 'dotenv';
-import EventType from './lib/events/enums/event_type';
-import EventNotification from './lib/events/interfaces/event_notification';
-import EventSubscriber from './lib/events/interfaces/event_subscriber';
-import KeyboardInput from './lib/input/keyboard_input';
-import AriaSpeechEngine from './lib/speech/aria_speech';
-import FileManager from './managers/file_manager';
+import * as dotenv from "dotenv";
+import EventType from "./lib/events/enums/event_type";
+import EventNotification from "./lib/events/interfaces/event_notification";
+import EventSubscriber from "./lib/events/interfaces/event_subscriber";
+import KeyboardInput from "./lib/input/keyboard_input";
+import SpeechManager from "@lib/speech/speech_manager";
+import FileManager from "./managers/file_manager";
 
 window.onload = () => {
-    setup();
+  setup();
 };
 
 async function setup() {
-    document.getElementById('app').focus();
-    dotenv.config();
-    const fileManager = new FileManager(process.env.PACK_PATH);
-    class LetterSpeaker implements EventSubscriber {
-private aria = new AriaSpeechEngine();
+  document.getElementById("app").focus();
+  dotenv.config();
+  const fileManager = new FileManager(process.env.PACK_PATH);
+  class LetterSpeaker implements EventSubscriber {
+    private aria = new SpeechManager();
 
-public onNotificationReceived(event: EventNotification): void {
-    this.aria.speak(event.data)
-}
+    constructor() {
+      this.aria.initialize();
     }
-    
-    const possibleLevels = fileManager.getFileList().filter((file) => file.getExtension() === 'ogg').filter((file) => file.getSize() > parseInt(process.env.MINIMUM_LEVEL_FILE_SIZE_IN_BYTES));
-    const input = new KeyboardInput();
-    const letterSpeaker = new LetterSpeaker();
-    input.subscribe(EventType.KEYBOARD_KEY_PRESSED, letterSpeaker);
 
+    public onNotificationReceived(event: EventNotification): void {
+      this.aria.speak(event.data);
+    }
+  }
+
+  const possibleLevels = fileManager
+    .getFileList()
+    .filter((file) => file.getExtension() === "ogg")
+    .filter(
+      (file) =>
+        file.getSize() > parseInt(process.env.MINIMUM_LEVEL_FILE_SIZE_IN_BYTES)
+    );
+  const input = new KeyboardInput();
+  const letterSpeaker = new LetterSpeaker();
+  input.subscribe(EventType.CHARACTER_TYPED, letterSpeaker);
 }
