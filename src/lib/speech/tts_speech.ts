@@ -14,12 +14,12 @@ class TTSSpeechEngine implements SpeechEngine {
     this.initialize();
   }
 
-  async initialize() {
+  public async initialize() {
     await this.populateVoiceList();
     this.setVoice(this.getDefaultVoice());
   }
 
-  async populateVoiceList(): Promise<void> {
+  private async populateVoiceList(): Promise<void> {
     const voices = this.synth.getVoices();
     this.voices = new Map();
     for (let i = 0; i < voices.length; i++) {
@@ -32,7 +32,7 @@ class TTSSpeechEngine implements SpeechEngine {
     this.setVoice(this.getDefaultVoice());
   };
 
-  public getDefaultVoice = (): SpeechSynthesisVoice => {
+  private getDefaultVoice = (): SpeechSynthesisVoice => {
     for (const voice of this.voices.values()) {
       if (voice.default && voice.lang.startsWith(this.language)) {
         return voice;
