@@ -1,105 +1,114 @@
-import KeyboardKey from "@lib/input/enums/keyboard_key";
+import KeyboardKeycode from "@lib/input/enums/keyboard_keycode";
 import EventManager from "@lib/events/event_manager";
 import EventType from "@lib/events/enums/event_type";
 
-class KeyboardInput extends EventManager{
-    private _keysDown: Map<KeyboardKey, boolean>;
-    private _keysUp: Map<KeyboardKey, boolean>;
-    private isInitialized = false;
+class KeyboardInput extends EventManager {
+  private _keysDown: Map<KeyboardKeycode, boolean>;
+  private _keysUp: Map<KeyboardKeycode, boolean>;
+  private isInitialized = false;
 
-    constructor() {
-        super();
+  constructor() {
+    super();
 
-        this._keysDown = new Map();
-        this._keysUp = new Map();
+    this._keysDown = new Map();
+    this._keysUp = new Map();
 
-        this.setupKeyboardEvents();
+    this.setupKeyboardEvents();
+  }
+
+  private setupKeyboardEvents() {
+    this.isInitialized = true;
+
+    document.addEventListener("keydown", (event: KeyboardEvent) => {
+      this.onKeyDown(event.which as KeyboardKeycode);
+
+      if (event.key.length == 1) {
+        this.onCharacterType(event.key);
+      }
+    });
+
+    document.addEventListener("keyup", (event: KeyboardEvent) => {
+      this.onKeyUp(event.which as KeyboardKeycode);
+    });
+  }
+
+  public reset(): void {
+    this._keysDown.forEach((value, key) => {
+      this._keysDown.delete(key);
+    });
+
+    this._keysUp.forEach((value, key) => {
+      this._keysUp.delete(key);
+    });
+
+    this.setupKeyboardEvents();
+  }
+
+  private onKeyUp(key: KeyboardKeycode): void {
+    this._keysDown.delete(key);
+    this._keysUp.set(key, true);
+
+    this.notify(EventType.KEYBOARD_KEY_RELEASED, key as never);
+  }
+
+  private onKeyDown(key: KeyboardKeycode): void {
+    this._keysDown.set(key, true);
+    this._keysUp.delete(key);
+
+    this.notify(EventType.KEYBOARD_KEY_PRESSED, key as never);
+  }
+
+  private onCharacterType(character: string): void {
+    this.notify(EventType.CHARACTER_TYPED, character as never);
+  }
+
+  public isDown(key: KeyboardKeycode): boolean {
+    if (!this.isInitialized) {
+      this.reset();
+      this.setupKeyboardEvents();
     }
 
-    private setupKeyboardEvents() {
-        this.isInitialized = true;
-        document.addEventListener("keydown", (event: KeyboardEvent) => {
-            this.onKeyDown(event.key as unknown as KeyboardKey);
-        });
+    return this._keysDown.get(key) || false;
+  }
 
-        document.addEventListener("keyup", (event: KeyboardEvent) => {
-            this.onKeyUp(event.key as unknown as KeyboardKey);
-        });
+  public isUp(key: KeyboardKeycode): boolean {
+    if (!this.isInitialized) {
+      this.reset();
+      this.setupKeyboardEvents();
     }
 
-    public reset(): void {
-        this._keysDown.forEach((value, key) => {
-            this._keysDown.set(key, false);
-        });
+    return !this._keysUp.get(key) || false;
+  }
 
-        this._keysUp.forEach((value, key) => {
-            this._keysUp.set(key, false);
-        });
-
-        this.setupKeyboardEvents();
+  public isPressed(key: KeyboardKeycode): boolean {
+    if (!this.isInitialized) {
+      this.reset();
+      this.setupKeyboardEvents();
     }
 
-    private onKeyUp(key: KeyboardKey): void {
-        this._keysDown.set(key, false);
-        this._keysUp.set(key, true);
+    return this._keysDown.get(key) || false;
+  }
 
-        this.notify(EventType.KEYBOARD_KEY_RELEASED, key as never)
+  public isReleased(key: KeyboardKeycode): boolean {
+    if (!this.isInitialized) {
+      this.reset();
+      this.setupKeyboardEvents();
     }
 
-    private onKeyDown(key: KeyboardKey): void {
-        this._keysDown.set(key, true);
-        this._keysUp.set(key, false);
+    return this._keysUp.get(key) || false;
+  }
 
-        this.notify(EventType.KEYBOARD_KEY_PRESSED, key as never)
-    }
+  public destroy = () => {
+    this.isInitialized = false;
 
-    public isDown(key: KeyboardKey): boolean {
-        if (!this.isInitialized) {
-            this.reset();
-            this.setupKeyboardEvents();
-        }
+    document.removeEventListener("keydown", (event: KeyboardEvent) => {
+      this.onKeyDown(event.key as unknown as KeyboardKeycode);
+    });
 
-        return this._keysDown.get(key) || false;
-    }
-
-    public isUp(key: KeyboardKey): boolean {
-        if (!this.isInitialized) {
-            this.reset();
-            this.setupKeyboardEvents();
-        }
-
-        return !this._keysUp.get(key) || false;
-    }
-
-    public isPressed(key: KeyboardKey): boolean {
-        if (!this.isInitialized) {
-            this.reset();
-            this.setupKeyboardEvents();
-        }
-
-        return this._keysDown.get(key) || false;
-    }
-
-    public isReleased(key: KeyboardKey): boolean {
-        if (!this.isInitialized) {
-            this.reset();
-            this.setupKeyboardEvents();
-        }
-
-        return this._keysUp.get(key) || false;
-    }
-
-    public destroy = () => {
-        this.isInitialized = false;
-        
-        document.removeEventListener("keydown", (event: KeyboardEvent) => {
-            this.onKeyDown(event.key as unknown as KeyboardKey);
-        });
-
-        document.removeEventListener("keyup", (event: KeyboardEvent) => {
-            this.onKeyUp(event.key as unknown as KeyboardKey);
-        });
-    }
+    document.removeEventListener("keyup", (event: KeyboardEvent) => {
+      this.onKeyUp(event.key as unknown as KeyboardKeycode);
+    });
+  };
 }
 
 export default KeyboardInput;
