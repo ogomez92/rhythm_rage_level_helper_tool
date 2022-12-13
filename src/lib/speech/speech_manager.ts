@@ -1,6 +1,6 @@
 import SpeechEngine from "@lib/speech/interfaces/speech_engine";
 import SpeechEngineType from "@lib/speech/enums/speech_engine_type";
-import TTSSpeechEngine from "lib/speech/tts_speech";
+import TTSSpeechEngine from "@lib/speech/tts_speech";
 import AriaSpeechEngine from "@lib/speech/aria_speech";
 
 export default class SpeechManager {
@@ -25,7 +25,13 @@ export default class SpeechManager {
 
   public isConfigureable = () => this.synthType !== SpeechEngineType.ARIA;
 
-  public speak = (text: string) => this.synth.speak(text);
+  public speak = (text: string) => {
+    try {
+      this.synth.speak(text);
+    } catch (error) {
+      throw new Error(`Speech failed: ${error}`)
+    }
+  };
 
   public stop = () => this.synth.stop();
 }

@@ -73,6 +73,10 @@ class TTSSpeechEngine implements SpeechEngine {
     const utterThis = new SpeechSynthesisUtterance(text);
     utterThis.voice = this.voice;
     utterThis.rate = this.rate;
+    utterThis.onerror = (error) => {
+      throw new Error(`Speech utterance errored out: ${error}`);
+    };
+
     this.synth.speak(utterThis);
   };
 
