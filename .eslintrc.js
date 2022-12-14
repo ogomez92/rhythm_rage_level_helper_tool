@@ -10,6 +10,7 @@ module.exports = {
     sourceType: 'module'
   },
   rules: {
+    "@typescript-eslint/no-explicit-any": "off",
   },
   settings: {
     'import/resolver': {

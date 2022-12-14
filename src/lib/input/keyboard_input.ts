@@ -62,28 +62,11 @@ class KeyboardInput extends EventManager {
     this.notify(EventType.CHARACTER_TYPED, character as never);
   }
 
-  public isDown(key: KeyboardKeycode): boolean {
-    if (!this.isInitialized) {
-      this.reset();
-      this.setupKeyboardEvents();
-    }
-
-    return this._keysDown.get(key) || false;
-  }
-
-  public isUp(key: KeyboardKeycode): boolean {
-    if (!this.isInitialized) {
-      this.reset();
-      this.setupKeyboardEvents();
-    }
-
-    return !this._keysUp.get(key) || false;
-  }
-
   public isPressed(key: KeyboardKeycode): boolean {
     if (!this.isInitialized) {
       this.reset();
       this.setupKeyboardEvents();
+      return false;
     }
 
     return this._keysDown.get(key) || false;
@@ -109,6 +92,10 @@ class KeyboardInput extends EventManager {
       this.onKeyUp(event.key as unknown as KeyboardKeycode);
     });
   };
+
+  public getKeysPressed = () => this._keysDown;
+
+  public getKeysReleased = () => this._keysUp;
 }
 
 export default KeyboardInput;
