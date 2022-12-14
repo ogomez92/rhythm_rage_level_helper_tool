@@ -14,7 +14,6 @@ describe("KeyboardInput", () => {
 
   it("should be correctly initialized", () => {
     expect(keyboardInput.getKeysPressed()).toEqual(new Map());
-    expect(keyboardInput.getKeysReleased()).toEqual(new Map());
   });
 
   it("Expects a key to be pressed ", () => {
@@ -45,10 +44,6 @@ describe("KeyboardInput", () => {
     document.dispatchEvent(event2);
 
     expect(keyboardInput.getKeysPressed().size).toEqual(0);
-    expect(keyboardInput.getKeysReleased().size).toEqual(1);
-    expect(
-      keyboardInput.getKeysReleased().get(KeyboardKeycode.ENTER)
-    ).toBeTruthy();
     expect(keyboardInput.isPressed(KeyboardKeycode.ENTER)).toBeFalsy;
   });
 
@@ -79,11 +74,9 @@ describe("KeyboardInput", () => {
     });
     document.dispatchEvent(event4);
     expect(keyboardInput.getKeysPressed().size).toBe(0);
-    expect(keyboardInput.getKeysReleased().size).toBe(2);
     expect(keyboardInput.isPressed(KeyboardKeycode.ALT)).toBeFalsy;
     expect(keyboardInput.isPressed(KeyboardKeycode.F4)).toBeFalsy;
     keyboardInput.reset();
-    expect(keyboardInput.getKeysReleased().size).toBe(0);
   });
 
   it("tests the reset event with the A key", () => {
@@ -96,7 +89,6 @@ describe("KeyboardInput", () => {
     expect(keyboardInput.isPressed(KeyboardKeycode.KEYA)).toBeTruthy;
     keyboardInput.reset();
     expect(keyboardInput.getKeysPressed().size).toBe(0);
-    expect(keyboardInput.getKeysReleased().size).toBe(0);
   });
 
   it("tests the onCharacterTyped event", () => {
@@ -123,7 +115,6 @@ describe("KeyboardInput", () => {
 
   it("Uses the keyboard event receiver to check F4 pressed and that the Alt key is down", () => {
     const eventReceiver = new KeyboardEventReceiver();
-    keyboardInput.subscribe(EventType.CHARACTER_TYPED, eventReceiver);
     keyboardInput.subscribe(EventType.KEYBOARD_KEY_PRESSED, eventReceiver);
     keyboardInput.subscribe(EventType.KEYBOARD_KEY_RELEASED, eventReceiver);
     const event = new KeyboardEvent("keydown", {

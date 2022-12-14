@@ -4,14 +4,12 @@ import EventType from "@lib/events/enums/event_type";
 
 class KeyboardInput extends EventManager {
   private _keysDown: Map<KeyboardKeycode, boolean>;
-  private _keysUp: Map<KeyboardKeycode, boolean>;
   private isInitialized = false;
 
   constructor() {
     super();
 
     this._keysDown = new Map();
-    this._keysUp = new Map();
 
     this.setupKeyboardEvents();
   }
@@ -37,23 +35,17 @@ class KeyboardInput extends EventManager {
       this._keysDown.delete(key);
     });
 
-    this._keysUp.forEach((value, key) => {
-      this._keysUp.delete(key);
-    });
-
     this.setupKeyboardEvents();
   }
 
   private onKeyUp(key: KeyboardKeycode): void {
     this._keysDown.delete(key);
-    this._keysUp.set(key, true);
 
     this.notify(EventType.KEYBOARD_KEY_RELEASED, key as never);
   }
 
   private onKeyDown(key: KeyboardKeycode): void {
     this._keysDown.set(key, true);
-    this._keysUp.delete(key);
 
     this.notify(EventType.KEYBOARD_KEY_PRESSED, key as never);
   }
@@ -78,7 +70,7 @@ class KeyboardInput extends EventManager {
       this.setupKeyboardEvents();
     }
 
-    return this._keysUp.get(key) || false;
+    return !this._keysDown.get(key) || true;
   }
 
   public destroy = () => {
@@ -94,8 +86,6 @@ class KeyboardInput extends EventManager {
   };
 
   public getKeysPressed = () => this._keysDown;
-
-  public getKeysReleased = () => this._keysUp;
 }
 
 export default KeyboardInput;
