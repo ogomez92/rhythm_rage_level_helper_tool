@@ -11,20 +11,27 @@ class TTSSpeechEngine implements SpeechEngine {
     this.language = "en";
     this.synth = window.speechSynthesis;
     this.synth.onvoiceschanged = () => this.initialize();
-    this.initialize();
   }
 
   public async initialize() {
+    try {
     await this.populateVoiceList();
     this.setVoice(this.getDefaultVoice());
+    } catch(error) {
+      throw new Error(`Unable to initialize tts engine`)
+    }
   }
 
   private async populateVoiceList(): Promise<void> {
+    try {
     const voices = this.synth.getVoices();
     this.voices = new Map();
     for (let i = 0; i < voices.length; i++) {
       this.voices.set(voices[i].voiceURI, voices[i]);
     }
+  } catch(error) {
+    throw new Error(`Unable to get voice list`)
+  }
   }
 
   public setLanguage = (language: string) => {
@@ -33,10 +40,14 @@ class TTSSpeechEngine implements SpeechEngine {
   };
 
   private getDefaultVoice = (): SpeechSynthesisVoice => {
-    for (const voice of this.voices.values()) {
-      if (voice.default && voice.lang.startsWith(this.language)) {
-        return voice;
+    try {
+      for (const voice of this.voices.values()) {
+        if (voice.default && voice.lang.startsWith(this.language)) {
+          return voice;
+        }
       }
+    } catch (error) {
+      throw new error(`Unable to get default voice: ${error}`);
     }
 
     return this.voices.values().next().value;
@@ -86,6 +97,11 @@ class TTSSpeechEngine implements SpeechEngine {
     if (this.synth.speaking) {
       this.synth.cancel();
     }
+  };
+
+  public destroy = () => {
+    this.stop();
+    this.synth = undefined;
   };
 }
 

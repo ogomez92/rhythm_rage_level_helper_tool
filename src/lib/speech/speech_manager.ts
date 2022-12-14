@@ -12,10 +12,19 @@ export default class SpeechManager {
   }
 
   async initialize() {
+    this.destroy();
+
     switch (this.synthType) {
       case SpeechEngineType.TTS:
-        this.synth = new TTSSpeechEngine();
-        await this.synth.initialize();
+        try {
+          this.synth = new TTSSpeechEngine();
+          await this.synth.initialize();
+        } catch (error) {
+          console.log(`TTS could not be initialized, going back to ARIA`);
+          this.synth.destroy();
+          this.synth = new AriaSpeechEngine();
+          this.synthType = SpeechEngineType.ARIA;
+        }
         break;
       case SpeechEngineType.ARIA:
         this.synth = new AriaSpeechEngine();
@@ -25,13 +34,23 @@ export default class SpeechManager {
 
   public isConfigureable = () => this.synthType !== SpeechEngineType.ARIA;
 
+  public getSynthType = () => this.synthType;
+
   public speak = (text: string) => {
     try {
       this.synth.speak(text);
     } catch (error) {
-      throw new Error(`Speech failed: ${error}`)
+      throw new Error(`Speech failed: ${error}`);
     }
   };
 
   public stop = () => this.synth.stop();
+
+  public destroy = () => {
+    if (this.synth) {
+      this.synth.destroy();
+      this.synth = undefined;
+      this.synthType = undefined;
+    }
+  };
 }

@@ -7,7 +7,7 @@ setVoice?(voice: SpeechSynthesisVoice): void;
 getVoiceList?(): SpeechSynthesisVoice[];
 setRate?(rate: number): void;
 getRate?(): number;
-
+destroy(): void;
 }
 
 export default SpeechEngine;
