@@ -1,5 +1,5 @@
 import SpeechEngine from "@lib/speech/interfaces/speech_engine";
-import Language from "@lib/enums/language";
+import Language from "@lib/localization/enums/language";
 
 const DEFAULT_FALLBACK_LANGUAGE = Language.ENGLISH;
 

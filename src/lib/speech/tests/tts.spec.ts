@@ -1,5 +1,5 @@
 import TTSSpeechEngine from "@lib/speech/tts_speech";
-import Language from "@lib/enums/language";
+import Language from "@lib/localization/enums/language";
 
 describe("TTS engine", () => {
   it("Should throw an error upon initialization because there aren't any voices available", async () => {
