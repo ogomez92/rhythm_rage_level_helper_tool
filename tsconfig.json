@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "esModuleInterop": true,
     "baseUrl": "src",
     "paths": {
       "@src/*": ["*"],
@@ -8,10 +9,7 @@
     "sourceMap": true,
     "noImplicitAny": true,
     "module": "commonjs",
-    "target": "es2022",
+    "target": "es2022"
   },
-  "exclude": [
-    "./bundle.*",
-    "node_modules/*"
-  ]
+  "exclude": ["./bundle.*", "node_modules/*"]
 }
