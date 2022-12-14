@@ -6,7 +6,8 @@ class AriaSpeechEngine implements SpeechEngine{
 
     constructor() {
         const screenReaderElement = document.createElement('div');
-        screenReaderElement.setAttribute('aria-live', 'assertive');
+        screenReaderElement.setAttribute('aria-live', 'polite');
+        screenReaderElement.setAttribute('id', 'ariaSpeech');
         screenReaderElement.setAttribute('aria-atomic', 'true');
         screenReaderElement.setAttribute('aria-relevant', 'text');
         screenReaderElement.setAttribute('role', 'status');
@@ -24,6 +25,10 @@ class AriaSpeechEngine implements SpeechEngine{
     }
 
     public stop = () => this.HTMLElement.innerText = ''
+
+    public destroy = () => {
+        this.HTMLElement.remove();
+    }
 }
 
 export default AriaSpeechEngine;
