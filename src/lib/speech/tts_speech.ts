@@ -13,12 +13,14 @@ class TTSSpeechEngine implements SpeechEngine {
   constructor(language = DEFAULT_FALLBACK_LANGUAGE) {
     this.language = language;
     this.synth = window.speechSynthesis;
-    this.synth.onvoiceschanged = () => this.initialize();
+    this.synth.onvoiceschanged = () => {
+      this.populateVoiceList();
+    }
   }
 
   public async initialize() {
+    
     try {
-      await this.populateVoiceList();
       this.setVoice(this.getDefaultVoice());
     } catch (error) {
       throw new Error(`Unable to initialize tts engine`);
@@ -28,7 +30,9 @@ class TTSSpeechEngine implements SpeechEngine {
   private async populateVoiceList(): Promise<void> {
     try {
       const voices = this.synth.getVoices();
+      console.log(voices)
       this.voices = new Map();
+
       for (let i = 0; i < voices.length; i++) {
         this.voices.set(voices[i].voiceURI, voices[i]);
       }
