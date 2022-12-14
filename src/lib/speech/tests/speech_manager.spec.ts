@@ -5,7 +5,10 @@ describe("Speech Manager", () => {
   let speechManager: SpeechManager;
 
   beforeEach(() => {
-    
+    speechManager = new SpeechManager();
+  });
+
+  it("should initialize with a tts engine but fallback to ARIA because no voices are found", async () => {
     const mockSpeechSynthesis = {
       speak: jest.fn(),
       cancel: jest.fn(),
@@ -16,16 +19,52 @@ describe("Speech Manager", () => {
     };
     Object.defineProperty(window, "speechSynthesis", {
       value: mockSpeechSynthesis,
+    })
+
+    expect(speechManager.getSynthType()).toBe(SpeechEngineType.TTS);
+
+    await speechManager.initialize();
+
+    expect(speechManager.getSynthType()).toBe(SpeechEngineType.ARIA);
+  });
+
+  it("should correctly initialize text to speech tts with mocked voices", async () => {
+    const voiceMock = jest.fn(() => [
+        {
+          name: "test1",
+          voiceURI: "test1",
+          lang: "en",
+          default: true,
+        },
+        {
+          name: "test2",
+          voiceURI: "test2",
+          lang: "en",
+          default: false,
+        },
+        {
+          name: "estest1",
+          voiceURI: "estest1",
+          lang: "es",
+          default: true,
+        },
+        {
+          name: "estest2",
+          voiceURI: "estest2",
+          lang: "es",
+          default: false,
+        },
+      ])
+
+    Object.defineProperty(window.speechSynthesis, "getVoices", {
+      value: voiceMock,
     });
 
     speechManager = new SpeechManager();
-  });
-
-  it("should initialize with a tts engine but fallback to ARIA because no voices are found", async () => {
     expect(speechManager.getSynthType()).toBe(SpeechEngineType.TTS);
 
     await speechManager.initialize();
     
-    expect(speechManager.getSynthType()).toBe(SpeechEngineType.ARIA);
+    expect(speechManager.getSynthType()).toBe(SpeechEngineType.TTS);
   });
 });

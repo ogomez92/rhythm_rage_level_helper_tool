@@ -20,7 +20,6 @@ export default class SpeechManager {
           this.synth = new TTSSpeechEngine();
           await this.synth.initialize();
         } catch (error) {
-          console.log(`TTS could not be initialized, going back to ARIA`);
           this.synth.destroy();
           this.synth = new AriaSpeechEngine();
           this.synthType = SpeechEngineType.ARIA;
