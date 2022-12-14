@@ -81,14 +81,32 @@ describe("TTS engine", () => {
 
     await speech.initialize();
 
-    expect(() => speech.setLanguage(Language.UNKNOWN)).toThrow()
+    expect(() => speech.setLanguage(Language.UNKNOWN)).toThrow();
 
-    expect(speech.getCurrentVoiceName()).toBe('test1')
+    expect(speech.getCurrentVoiceName()).toBe("test1");
   });
 
-  it('throws an error if speak is used before initialization', () => {
+  it("throws an error if speak is used before initialization", () => {
     const speech = new TTSSpeechEngine();
 
-    expect(() => speech.speak('test')).toThrow(/before initialization/)
-  })
+    expect(() => speech.speak("test")).toThrow(/before initialization/);
+  });
+
+  it("correctly speaks an utterance", async () => {
+    const TEST_MESSAGE = "test";
+
+    Object.defineProperty(window, "SpeechSynthesisUtterance", {
+      value: jest.fn().mockImplementation(() => ({
+        addEventListener: jest.fn(),
+      })),
+    });
+
+    const speech = new TTSSpeechEngine();
+
+    await speech.initialize();
+
+    speech.speak(TEST_MESSAGE);
+
+    expect(speechSynthesis.speak).toHaveBeenCalledTimes(1);
+  });
 });

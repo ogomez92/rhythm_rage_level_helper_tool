@@ -113,7 +113,7 @@ class TTSSpeechEngine implements SpeechEngine {
     }
 
     this.stop();
-
+try {
     const utterThis = new SpeechSynthesisUtterance(text);
     utterThis.voice = this.voice;
     utterThis.rate = this.rate;
@@ -122,6 +122,9 @@ class TTSSpeechEngine implements SpeechEngine {
     };
 
     this.synth.speak(utterThis);
+  } catch(error) {
+    throw new Error(`There was an error creating the speech utterance: ${error}`)
+  }
   };
 
   public getRate = (): number => this.rate;
