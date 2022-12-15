@@ -60,6 +60,11 @@ class TTSSpeechEngine implements SpeechEngine {
         return voice;
       }
     }
+    for (const voice of this.voices.values()) {
+      if (voice.lang.startsWith(this.language)) {
+        return voice;
+      }
+    }
 
     throw new Error(
       `Unable to get default voice: Language given was ${this.language}`
