@@ -9,44 +9,47 @@ class TTSSpeechEngine implements SpeechEngine {
   private voices: Map<string, SpeechSynthesisVoice> = new Map();
   private language: Language;
   private voice: SpeechSynthesisVoice;
+  private isReady = false;
 
   constructor(language = DEFAULT_FALLBACK_LANGUAGE) {
     this.language = language;
-    this.synth = window.speechSynthesis;
-    this.synth.onvoiceschanged = () => {
-      this.populateVoiceList();
-    }
   }
 
-  public async initialize() {
-    
-    try {
-      this.setVoice(this.getDefaultVoice());
-    } catch (error) {
-      throw new Error(`Unable to initialize tts engine`);
-    }
+  public async initialize(): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      if (!window.speechSynthesis) {
+        reject(new Error('This browser does not support text to speech, no voices are available.'));
+      }
+      this.synth = window.speechSynthesis;
+      this.synth.onvoiceschanged = () => {
+        this.populateVoiceList();
+        this.setVoice(this.getDefaultVoice());
+        console.log(`ready: Number of voices is ${this.getVoiceList().length}`);
+        resolve(true);
+      };
+    });
   }
 
   private async populateVoiceList(): Promise<void> {
     try {
       const voices = this.synth.getVoices();
-      console.log(voices)
       this.voices = new Map();
 
       for (let i = 0; i < voices.length; i++) {
         this.voices.set(voices[i].voiceURI, voices[i]);
       }
     } catch (error) {
-      throw new Error(`Unable to get voice list`);
+      throw new Error(`Unable to get voice list: ${error}`);
     }
   }
 
   public setLanguage = (language: Language) => {
+    const oldLanguage = this.language;
     try {
       this.language = language;
       this.setVoice(this.getDefaultVoice());
     } catch (error) {
-      this.setLanguage(DEFAULT_FALLBACK_LANGUAGE);
+      this.language = oldLanguage;
       throw new Error(`Invalid language for tts specified: ${error}`);
     }
   };
@@ -113,27 +116,33 @@ class TTSSpeechEngine implements SpeechEngine {
 
   public speak = (text: string) => {
     if (this.voices.size === 0) {
-      throw new Error(`Speak cannot be used before initialization`);
+      throw new Error(`Speak cannot be used when no voices are available`);
     }
 
     this.stop();
-try {
-    const utterThis = new SpeechSynthesisUtterance(text);
-    utterThis.voice = this.voice;
-    utterThis.rate = this.rate;
-    utterThis.onerror = (error) => {
-      throw new Error(`Speech utterance errored out: ${error}`);
-    };
+    try {
+      const utterThis = new SpeechSynthesisUtterance(text);
+      utterThis.voice = this.voice;
+      utterThis.rate = this.rate;
+      utterThis.onerror = (error) => {
+        throw new Error(`Speech utterance errored out: ${error}`);
+      };
 
-    this.synth.speak(utterThis);
-  } catch(error) {
-    throw new Error(`There was an error creating the speech utterance: ${error}`)
-  }
+      this.synth.speak(utterThis);
+    } catch (error) {
+      throw new Error(
+        `There was an error creating the speech utterance: ${error}`
+      );
+    }
   };
 
   public getRate = (): number => this.rate;
 
   public stop = () => {
+    if (!this.synth) {
+      return;
+    }
+    
     if (this.synth.speaking) {
       this.synth.cancel();
     }
@@ -145,6 +154,8 @@ try {
   };
 
   public getCurrentVoiceName = (): string => this.voice.name;
+
+  public getLanguage = () => this.language;
 }
 
 export default TTSSpeechEngine;

@@ -3,6 +3,13 @@ import Language from "@lib/localization/enums/language";
 
 describe("TTS engine", () => {
   it("Should throw an error upon initialization because there aren't any voices available", async () => {
+    const speech = new TTSSpeechEngine();
+
+    // call intialize and expect it to reject
+    await expect(speech.initialize()).rejects.toThrow(/no voices/);
+  });
+
+  it("should correctly initialize text to speech tts with mocked voices", async () => {
     const mockSpeechSynthesis = {
       speak: jest.fn(),
       cancel: jest.fn(),
@@ -16,14 +23,6 @@ describe("TTS engine", () => {
       value: mockSpeechSynthesis,
     });
 
-    const speech = new TTSSpeechEngine();
-
-    await expect(speech.initialize()).rejects.toThrow(
-      "Unable to initialize tts engine"
-    );
-  });
-
-  it("should correctly initialize text to speech tts with mocked voices", async () => {
     const voiceMock = jest.fn(() => [
       {
         name: "test1",
@@ -57,39 +56,46 @@ describe("TTS engine", () => {
 
     const speech = new TTSSpeechEngine();
 
-    await speech.initialize();
+    speech.initialize().then(() => {
+      expect(speech.getCurrentVoiceName()).toBe("test1");
+      expect(speech.getVoiceList()).toHaveLength(4);
+      expect(speech.getVoiceListForCurrentLanguage()).toHaveLength(2);
+    });
 
-    expect(speech.getCurrentVoiceName()).toBe("test1");
-    expect(speech.getVoiceList()).toHaveLength(4);
-    expect(speech.getVoiceListForCurrentLanguage()).toHaveLength(2);
+    window.speechSynthesis.onvoiceschanged(new Event("onvoiceschanged"));
   });
 
   it("Changes the language of the engine and gets the new voices", async () => {
     const speech = new TTSSpeechEngine();
 
-    await speech.initialize();
+    speech.initialize().then(() => {
+      speech.setLanguage(Language.SPANISH);
 
-    speech.setLanguage(Language.SPANISH);
-
-    expect(speech.getCurrentVoiceName()).toBe("estest1");
-    expect(speech.getVoiceList()).toHaveLength(4);
-    expect(speech.getVoiceListForCurrentLanguage()).toHaveLength(2);
-    expect(speech.getCurrentVoiceName()).toBe("estest1");
+      expect(speech.getCurrentVoiceName()).toBe("estest1");
+      expect(speech.getVoiceList()).toHaveLength(4);
+      expect(speech.getVoiceListForCurrentLanguage()).toHaveLength(2);
+      expect(speech.getCurrentVoiceName()).toBe("estest1");
+    });
+    window.speechSynthesis.onvoiceschanged(new Event("onvoiceschanged"));
   });
-  it("Throws an error if an invalid language is given and falls back to English", async () => {
+
+  it("Throws an error if an invalid language is given and falls back to the previously used language", async () => {
     const speech = new TTSSpeechEngine();
 
-    await speech.initialize();
+    speech.initialize().then(() => {
+      const currentLanguage: Language = speech.getLanguage();
 
-    expect(() => speech.setLanguage(Language.UNKNOWN)).toThrow();
-
-    expect(speech.getCurrentVoiceName()).toBe("test1");
+      expect(() => speech.setLanguage(Language.UNKNOWN)).toThrow();
+      expect(speech.getCurrentVoiceName()).toBe("test1");
+      expect(speech.getLanguage()).toBe(currentLanguage);
+    });
+    window.speechSynthesis.onvoiceschanged(new Event("onvoiceschanged"));
   });
 
   it("throws an error if speak is used before initialization", () => {
     const speech = new TTSSpeechEngine();
 
-    expect(() => speech.speak("test")).toThrow(/before initialization/);
+    expect(() => speech.speak("test")).toThrow(/no voices are available/);
   });
 
   it("correctly speaks an utterance", async () => {
@@ -102,11 +108,21 @@ describe("TTS engine", () => {
     });
 
     const speech = new TTSSpeechEngine();
+    speech.initialize().then(() => {
+      speech.speak(TEST_MESSAGE);
 
-    await speech.initialize();
+      expect(speechSynthesis.speak).toHaveBeenCalledTimes(1);
+    });
+    window.speechSynthesis.onvoiceschanged(new Event("onvoiceschanged"));
+  });
 
-    speech.speak(TEST_MESSAGE);
+  it("correctly uses the stop function", async () => {
+    const speech = new TTSSpeechEngine();
 
-    expect(speechSynthesis.speak).toHaveBeenCalledTimes(1);
+    speech.initialize().then(() => {
+      expect(() => speech.stop()).not.toThrow();
+    });
+
+    window.speechSynthesis.onvoiceschanged(new Event("onvoiceschanged"));
   });
 });
