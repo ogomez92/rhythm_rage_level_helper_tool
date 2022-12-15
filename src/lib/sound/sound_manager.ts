@@ -3,7 +3,7 @@ import Sound from "@lib/sound/sound";
 export default class SoundManager {
   private context: AudioContext;
   private basePath: string = __dirname;
-  private sounds: Map<string, Sound> = new Map();
+  private sounds: Map<string, AudioBuffer> = new Map();
   private panner: StereoPannerNode;
 
   constructor() {
@@ -13,24 +13,24 @@ export default class SoundManager {
     this.panner.connect(this.context.destination);
   }
 
-  private loadSound = async (filePath: string) => {
+  public create = async (filePath: string) => {
+    let sound: Sound;
     if (!this.sounds.has(filePath)) {
       try {
         const response = await fetch(`${this.basePath}/${filePath}`);
         const arrayBuffer = await response.arrayBuffer();
         const audioBuffer = await this.context.decodeAudioData(arrayBuffer);
-        const audioSource = new AudioBufferSourceNode(this.context, {
-          buffer: audioBuffer,
-        });
+        this.sounds.set(filePath, audioBuffer);
 
-        audioSource.connect(this.context.destination);
-
-        const sound = new Sound(audioSource, this.context);
-        this.sounds.set(filePath, sound);
+        sound = new Sound(audioBuffer, this.context, filePath);
       } catch (error) {
         throw new Error(`Unable to load sound: ${error}`);
       }
+    } else {
+      sound = new Sound(this.sounds.get(filePath), this.context, filePath);
     }
+
+    return sound;
   };
 
   public getBasePath = () => this.basePath;
