@@ -1,4 +1,6 @@
-export default class Sound {
+import SoundManager from "@lib/sound/sound_manager";
+
+export default class Sound{
   private buffer: AudioBuffer;
   private source: AudioBufferSourceNode;
   private fadeDuration = 400;
@@ -11,8 +13,9 @@ export default class Sound {
   private panner: StereoPannerNode;
   private gain: GainNode;
   private filePath: string;
+  private manager: SoundManager;
 
-  constructor(buffer: AudioBuffer, context: AudioContext, path: string) {
+  constructor(buffer: AudioBuffer, context: AudioContext, path: string, manager: SoundManager) {
     this.buffer = buffer;
     this.context = context;
     this.filePath = path;
@@ -21,6 +24,7 @@ export default class Sound {
     });
 
     this.source.connect(this.context.destination);
+    this.manager = manager;
   }
 
   private setupPan = () => {
@@ -173,4 +177,12 @@ export default class Sound {
       this.context.currentTime + duration + sweepSpeed
     );
   };
+
+  public destroy = () => {
+    this.disconnect();
+    
+    this.manager.freeSound(this);
+  };
+
+  public getFilePath = (): string => this.filePath;
 }

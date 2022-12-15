@@ -1,9 +1,10 @@
 import Sound from "@lib/sound/sound";
+import SoundInformation from "@lib/sound/interfaces/sound_information";
 
 export default class SoundManager {
   private context: AudioContext;
   private basePath: string = __dirname;
-  private sounds: Map<string, AudioBuffer> = new Map();
+  private sounds: SoundInformation[];
   private panner: StereoPannerNode;
 
   constructor() {
@@ -13,27 +14,54 @@ export default class SoundManager {
     this.panner.connect(this.context.destination);
   }
 
-  public create = async (filePath: string) => {
+  public create = async (filePath: string): Promise<Sound> => {
+    let buffer: AudioBuffer;
     let sound: Sound;
-    if (!this.sounds.has(filePath)) {
-      try {
-        const response = await fetch(`${this.basePath}/${filePath}`);
-        const arrayBuffer = await response.arrayBuffer();
-        const audioBuffer = await this.context.decodeAudioData(arrayBuffer);
-        this.sounds.set(filePath, audioBuffer);
 
-        sound = new Sound(audioBuffer, this.context, filePath);
-      } catch (error) {
-        throw new Error(`Unable to load sound: ${error}`);
-      }
+    buffer = this.getBufferAtPath(filePath);
+    if (buffer) {
+      const sound = new Sound(buffer, this.context, filePath, this);
+      this.sounds.push({ buffer: buffer, path: filePath });
+
+      return sound;
     } else {
-      sound = new Sound(this.sounds.get(filePath), this.context, filePath);
-    }
+      buffer = await this.createBufferFromPath(filePath);
+      sound = new Sound(buffer, this.context, filePath, this);
 
-    return sound;
+      return sound;
+    }
   };
 
   public getBasePath = () => this.basePath;
 
   public setBasePath = (newPath: string) => (this.basePath = newPath);
+
+  private createBufferFromPath = async (filePath: string) => {
+    try {
+      const response = await fetch(`${this.basePath}/${filePath}`);
+      const arrayBuffer = await response.arrayBuffer();
+      const audioBuffer = await this.context.decodeAudioData(arrayBuffer);
+      this.sounds.push({ path: `${this.basePath}/${filePath}`, buffer: audioBuffer });
+      return audioBuffer;
+    } catch (error) {
+      throw new Error(`Unable to create buffer for ${filePath}: ${error}`);
+    }
+  };
+
+  public getBufferAtPath = (path: string): AudioBuffer | undefined => {
+    for (const soundInfo of this.sounds) {
+      if (soundInfo.path === path) {
+        return soundInfo.buffer;
+      }
+    }
+  };
+
+  public freeSound =(sound: Sound) => {
+    for (let i = 0; i < this.sounds.length; i++) {
+      if (this.sounds[i].path === sound.getFilePath()) {
+        this.sounds.splice(i, 1);
+        break;
+      }
+    }
+  }
 }
