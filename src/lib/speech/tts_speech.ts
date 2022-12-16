@@ -23,8 +23,12 @@ class TTSSpeechEngine implements SpeechEngine {
       this.synth = window.speechSynthesis;
       this.synth.onvoiceschanged = () => {
         this.populateVoiceList();
+
+        if (this.voices.size == 0) {
+          return;
+        }
+
         this.setVoice(this.getDefaultVoice());
-        console.log(`ready: Number of voices is ${this.getVoiceList().length}`);
         resolve(true);
       };
     });
@@ -55,6 +59,7 @@ class TTSSpeechEngine implements SpeechEngine {
   };
 
   private getDefaultVoice = (): SpeechSynthesisVoice => {
+
     for (const voice of this.voices.values()) {
       if (voice.default && voice.lang.startsWith(this.language)) {
         return voice;
@@ -147,7 +152,7 @@ class TTSSpeechEngine implements SpeechEngine {
     if (!this.synth) {
       return;
     }
-    
+
     if (this.synth.speaking) {
       this.synth.cancel();
     }
