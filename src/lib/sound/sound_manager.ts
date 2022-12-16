@@ -49,11 +49,7 @@ export default class SoundManager {
   };
 
   public getBufferAtPath = (path: string): AudioBuffer | undefined => {
-    for (const soundInfo of this.sounds) {
-      if (soundInfo.path === path) {
-        return soundInfo.buffer;
-      }
-    }
+    return this.sounds.find((sound) => sound.path === path)?.buffer;
   };
 
   public freeSound =(sound: Sound) => {
