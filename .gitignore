@@ -4,3 +4,4 @@ dist
 bundle.*
 .env
 coverage
+stest

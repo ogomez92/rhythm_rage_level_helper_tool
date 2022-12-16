@@ -84,6 +84,7 @@ export default class Sound{
 
     this.gain = undefined;
     this.panner = undefined;
+    this.source = null;
   };
 
   public fadeOut(milliseconds = this.fadeDuration) {
@@ -128,6 +129,8 @@ export default class Sound{
       this.context.currentTime
     );
     this.source.connect(this.context.destination);
+    this.setupPan();
+    this.setupGain();
     this.source.start();
   };
 
@@ -180,7 +183,7 @@ export default class Sound{
 
   public destroy = () => {
     this.disconnect();
-    
+    this.buffer = null;
     this.manager.freeSound(this);
   };
 

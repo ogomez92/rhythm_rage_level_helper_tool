@@ -1,10 +1,13 @@
 import Sound from "@lib/sound/sound";
 import SoundInformation from "@lib/sound/interfaces/sound_information";
+import TimeHelper from "../helpers/time_helper";
 
 export default class SoundManager {
   private context: AudioContext;
   private basePath: string = __dirname;
-  private sounds: SoundInformation[];
+  private sounds: SoundInformation[] = [];
+  private loadingPaths: string[] = [];
+  private extension = 'ogg';
   private panner: StereoPannerNode;
 
   constructor() {
@@ -18,15 +21,29 @@ export default class SoundManager {
     let buffer: AudioBuffer;
     let sound: Sound;
 
-    buffer = this.getBufferAtPath(filePath);
+    buffer = this.getBufferAtPath(`${this.basePath}/${filePath}.${this.extension}`);
+
     if (buffer) {
-      const sound = new Sound(buffer, this.context, filePath, this);
-      this.sounds.push({ buffer: buffer, path: filePath });
+      const sound = new Sound(buffer, this.context, `${this.basePath}/${filePath}.${this.extension}`, this);
+      this.sounds.push({ buffer: buffer, path: `${this.basePath}/${filePath}.${this.extension}` });
 
       return sound;
     } else {
-      buffer = await this.createBufferFromPath(filePath);
-      sound = new Sound(buffer, this.context, filePath, this);
+      if (this.loadingPaths.includes(`${this.basePath}/${filePath}.${this.extension}`)) {
+        while (this.loadingPaths.includes(`${this.basePath}/${filePath}.${this.extension}`)) {
+          await TimeHelper.sleep(25);
+        }
+
+        buffer = this.getBufferAtPath(`${this.basePath}/${filePath}.${this.extension}`);
+
+        if (!buffer) {
+          throw new Error(`Unable to load sound from a preloading buffer at ${this.basePath}/${filePath}.${this.extension}`);
+        }
+      } else {
+        buffer = await this.createBufferFromPath(`${this.basePath}/${filePath}.${this.extension}`);
+      }
+
+      sound = new Sound(buffer, this.context, `${this.basePath}/${filePath}.${this.extension}`, this);
 
       return sound;
     }
@@ -36,23 +53,33 @@ export default class SoundManager {
 
   public setBasePath = (newPath: string) => (this.basePath = newPath);
 
+  public getExtension = () => this.extension;
+
+  public setExtension = (newExtension: string) => this.extension = newExtension;
+
   private createBufferFromPath = async (filePath: string) => {
+    this.loadingPaths.push(filePath);
+
     try {
-      const response = await fetch(`${this.basePath}/${filePath}`);
-      const arrayBuffer = await response.arrayBuffer();
+      let response = await fetch(filePath);
+      let arrayBuffer = await response.arrayBuffer();
+      response = null;
       const audioBuffer = await this.context.decodeAudioData(arrayBuffer);
-      this.sounds.push({ path: `${this.basePath}/${filePath}`, buffer: audioBuffer });
+      arrayBuffer = null;
+      this.sounds.push({ path: filePath, buffer: audioBuffer });
+      this.loadingPaths = this.loadingPaths.filter((path) => path !== filePath);
       return audioBuffer;
     } catch (error) {
+      this.loadingPaths = this.loadingPaths.filter((path) => path !== filePath);
       throw new Error(`Unable to create buffer for ${filePath}: ${error}`);
     }
   };
 
-  public getBufferAtPath = (path: string): AudioBuffer | undefined => {
+  private getBufferAtPath = (path: string): AudioBuffer | undefined => {
     return this.sounds.find((sound) => sound.path === path)?.buffer;
   };
 
-  public freeSound =(sound: Sound) => {
+  public freeSound = (sound: Sound) => {
     for (let i = 0; i < this.sounds.length; i++) {
       if (this.sounds[i].path === sound.getFilePath()) {
         this.sounds.splice(i, 1);
