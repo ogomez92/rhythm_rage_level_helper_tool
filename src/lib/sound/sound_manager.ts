@@ -1,7 +1,9 @@
 import Sound from "@lib/sound/sound";
 import path from 'path';
 import SoundInformation from "@lib/sound/interfaces/sound_information";
-import TimeHelper from "../helpers/time_helper";
+import TimeHelper from "@lib/helpers/time_helper";
+import AudioDecoder from "@lib/sound/interfaces/AudioDecoder";
+import NativeDecoder from "@lib/sound/decoders/native_decoder";
 
 export default class SoundManager {
   private context: AudioContext;
@@ -19,7 +21,7 @@ export default class SoundManager {
   }
 
   public create = async (filePath: string, fullPathSpecified = false): Promise<Sound> => {
-    let builtPath = path.join(this.basePath, filePath+`.${this.extension}`)
+    let builtPath = path.join(this.basePath, filePath + `.${this.extension}`)
 
     if (fullPathSpecified) {
       builtPath = path.resolve(filePath);
@@ -68,11 +70,8 @@ export default class SoundManager {
     this.loadingPaths.push(filePath);
 
     try {
-      let response = await fetch(filePath);
-      let arrayBuffer = await response.arrayBuffer();
-      response = null;
-      const audioBuffer = await this.context.decodeAudioData(arrayBuffer);
-      arrayBuffer = null;
+      const decoder: AudioDecoder = new NativeDecoder(this.context);
+      const audioBuffer = await decoder.decode(filePath);
       this.sounds.push({ path: filePath, buffer: audioBuffer });
       this.loadingPaths = this.loadingPaths.filter((path) => path !== filePath);
       return audioBuffer;
@@ -100,8 +99,8 @@ export default class SoundManager {
   public loadBatch = async (paths: string[], fullPathSpecified = false): Promise<void> => {
     const promises = paths.map((path) => this.create(path, fullPathSpecified));
     try {
-    await Promise.all(promises);
-    } catch(error) {
+      await Promise.all(promises);
+    } catch (error) {
       throw new Error(`Error while batch loading: ${error}`)
     }
   }
