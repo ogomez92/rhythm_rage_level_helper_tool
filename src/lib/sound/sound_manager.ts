@@ -99,6 +99,10 @@ export default class SoundManager {
 
   public loadBatch = async (paths: string[], fullPathSpecified = false): Promise<void> => {
     const promises = paths.map((path) => this.create(path, fullPathSpecified));
+    try {
     await Promise.all(promises);
+    } catch(error) {
+      throw new Error(`Error while batch loading: ${error}`)
+    }
   }
 }
