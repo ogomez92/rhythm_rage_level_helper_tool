@@ -54,28 +54,33 @@ export default class Sound {
 
   public getPan = () => this.pan;
 
-  public setPan = (newPan: number) => {
+  public setPan = (newPan: number): Sound => {
     this.pan = newPan;
     this.setupPan();
     this.panner.pan.setValueAtTime(this.pan, this.context.currentTime);
+    return this;
   };
 
   public getVolume = () => this.volume;
 
-  public setVolume = (newVolume: number) => {
+  public setVolume = (newVolume: number): Sound => {
     this.volume = newVolume;
     this.setupGain();
     this.gain.gain.setValueAtTime(this.volume, this.context.currentTime);
+
+    return this;
   };
 
   public getPitch = () => this.pitch;
 
-  public setPitch = (newPitch: number) => {
+  public setPitch = (newPitch: number): Sound => {
     this.pitch = newPitch;
     this.source.playbackRate.setValueAtTime(
       this.pitch,
       this.context.currentTime
     );
+
+    return this;
   };
 
   private disconnect = () => {
@@ -94,40 +99,50 @@ export default class Sound {
     this.source = null;
   };
 
-  public fadeOut(milliseconds = this.fadeDuration) {
-    if (!this.gain) {
-      this.setupGain();
-    }
+  public fadeOut(milliseconds = this.fadeDuration): Promise<void> {
+    return new Promise((resolve) => {
+      if (!this.gain) {
+        this.setupGain();
+      }
 
-    this.gain.gain.linearRampToValueAtTime(
-      0,
-      this.context.currentTime + milliseconds / 1000
-    );
-    setTimeout(this.stop, milliseconds);
+      this.gain.gain.linearRampToValueAtTime(
+        0,
+        this.context.currentTime + milliseconds / 1000
+      );
+      setTimeout(this.stop, milliseconds);
+      setTimeout(resolve, milliseconds)
+    });
   }
 
-  public fadeIn(milliseconds = this.fadeDuration, toVolume = 1) {
-    if (!this.gain) {
-      this.createGain();
-    }
+  public fadeIn(milliseconds = this.fadeDuration, toVolume = 1): Promise<void> {
+    return new Promise((resolve) => {
+      if (!this.gain) {
+        this.createGain();
+      }
 
-    this.gain.gain.linearRampToValueAtTime(
-      toVolume,
-      this.context.currentTime + milliseconds / 1000
-    );
+      this.gain.gain.linearRampToValueAtTime(
+        toVolume,
+        this.context.currentTime + milliseconds / 1000
+      );
+      setTimeout(resolve, milliseconds)
+    });
   }
 
   public getFadeDuration = () => this.fadeDuration;
 
-  public setFadeDuration = (newFadeDuration: number) =>
+  public setFadeDuration = (newFadeDuration: number): Sound => {
     (this.fadeDuration = newFadeDuration);
+    return this;
+  }
 
-  public pause = () => {
+  public pause = (): Sound => {
     this.source.stop();
     this.disconnect();
+
+    return this;
   };
 
-  public play = () => {
+  public play = (): Sound => {
     this.source = this.context.createBufferSource();
     this.source.buffer = this.buffer;
     this.source.loop = this.isLooped;
@@ -139,38 +154,50 @@ export default class Sound {
     this.setupPan();
     this.setupGain();
     this.source.start();
+
+    return this;
   };
 
   public gradualSlowdown = (
     milliseconds = this.fadeDuration,
     newPitchValue = 0
-  ) => {
-    this.source.playbackRate.linearRampToValueAtTime(
-      newPitchValue,
-      this.context.currentTime + milliseconds / 1000
-    );
+  ): Promise<void> => {
+    return new Promise((resolve) => {
+      this.source.playbackRate.linearRampToValueAtTime(
+        newPitchValue,
+        this.context.currentTime + milliseconds / 1000
+      );
 
-    this.pitch = newPitchValue;
+      this.pitch = newPitchValue;
 
-    if (this.pitch == 0) {
-      setTimeout(this.stop, milliseconds);
-    }
+      if (this.pitch == 0) {
+        setTimeout(this.stop, milliseconds);
+      }
+      setTimeout(resolve, milliseconds)
+    });
   };
 
-  public stop = () => {
+  public stop = (): Sound => {
     this.source.stop();
     this.disconnect();
+
+    return this;
   };
 
-  public speedUp = (milliseconds = this.fadeDuration, newPitchValue = 1) => {
-    this.source.playbackRate.linearRampToValueAtTime(
-      newPitchValue,
-      this.context.currentTime + milliseconds / 1000
-    );
-    this.pitch = newPitchValue;
+  public speedUp = (milliseconds = this.fadeDuration, newPitchValue = 1): Promise<void> => {
+    return new Promise((resolve) => {
+      this.source.playbackRate.linearRampToValueAtTime(
+        newPitchValue,
+        this.context.currentTime + milliseconds / 1000
+      );
+      this.pitch = newPitchValue;
+
+      setTimeout(resolve, milliseconds);
+    });
   };
 
-  public stereoSweep = (duration: number, sweepSpeedMilliseconds: number) => {
+  public stereoSweep = (duration: number, sweepSpeedMilliseconds: number): Promise<void> => {
+    return new Promise((resolve) => {
     const sweepSpeed = sweepSpeedMilliseconds / 1000;
 
     this.createPanner();
@@ -186,6 +213,9 @@ export default class Sound {
       0,
       this.context.currentTime + duration + sweepSpeed
     );
+
+    setTimeout(resolve, duration);
+    });
   };
 
   public destroy = () => {
