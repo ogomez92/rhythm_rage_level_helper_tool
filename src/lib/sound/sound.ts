@@ -1,6 +1,6 @@
 import SoundManager from "@lib/sound/sound_manager";
 
-export default class Sound{
+export default class Sound {
   private buffer: AudioBuffer;
   private source: AudioBufferSourceNode;
   private fadeDuration = 400;
@@ -19,33 +19,38 @@ export default class Sound{
     this.buffer = buffer;
     this.context = context;
     this.filePath = path;
-    this.source = new AudioBufferSourceNode(this.context, {
-      buffer: this.buffer,
-    });
-
-    this.source.connect(this.context.destination);
     this.manager = manager;
   }
 
   private setupPan = () => {
-    if (this.panner) {
+    if (this.panner || this.pan == 0.0) {
       return;
     }
 
+    this.createPanner();
+  };
+
+  private createPanner = () => {
+    console.log('setting up pan');
     this.panner = new StereoPannerNode(this.context);
     this.source.connect(this.panner);
+    this.panner.pan.setValueAtTime(this.pan, this.context.currentTime);
     this.panner.connect(this.context.destination);
-  };
+  }
 
   private setupGain = () => {
-    if (this.gain) {
+    if (this.gain || this.volume == 1.0) {
       return;
     }
+  };
 
+  private createGain = () => {
+    console.log('setting up gain')
     this.gain = new GainNode(this.context);
+    this.gain.gain.setValueAtTime(this.volume, this.context.currentTime);
     this.source.connect(this.gain);
     this.gain.connect(this.context.destination);
-  };
+  }
 
   public getPan = () => this.pan;
 
@@ -103,7 +108,7 @@ export default class Sound{
 
   public fadeIn(milliseconds = this.fadeDuration, toVolume = 1) {
     if (!this.gain) {
-      this.setupGain();
+      this.createGain();
     }
 
     this.gain.gain.linearRampToValueAtTime(
@@ -168,7 +173,7 @@ export default class Sound{
   public stereoSweep = (duration: number, sweepSpeedMilliseconds: number) => {
     const sweepSpeed = sweepSpeedMilliseconds / 1000;
 
-    this.setupPan();
+    this.createPanner();
 
     for (let i = 0; i <= duration; i += sweepSpeed) {
       this.panner.pan.linearRampToValueAtTime(1, this.context.currentTime + i);

@@ -45,7 +45,7 @@ async function setup() {
   const letterSpeaker = new LetterSpeaker();
   input.subscribe(EventType.CHARACTER_TYPED, letterSpeaker);
 
-  let sm = new SoundManager();
+  const sm = new SoundManager();
   let sound;
   /*
   sound = await sm.create('stest/big');
@@ -56,7 +56,16 @@ async function setup() {
   // play all the files in the stest folder using fs module
   const directoryPath = path.join(__dirname, 'stest', 'small');
   const files = await fs.readdirSync(directoryPath);
+  
   const oggFiles = files.filter((file) => path.extname(file) === '.ogg');
+  for (let i = 0; i < oggFiles.length; i++) {
+    const file = oggFiles[i];
+    const filePath = path.join(directoryPath, file);
+    sound = await sm.create(filePath, true);
+    sound.play();
+    await TimeHelper.sleep(25);
+    sound.destroy();
+  }
   for (let i = 0; i < oggFiles.length; i++) {
     const file = oggFiles[i];
     const filePath = path.join(directoryPath, file);
