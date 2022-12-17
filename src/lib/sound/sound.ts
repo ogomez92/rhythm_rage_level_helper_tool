@@ -74,16 +74,18 @@ export default class Sound{
   };
 
   private disconnect = () => {
+    this.source.stop();
     this.source.disconnect();
     if (this.panner) {
       this.panner.disconnect();
     }
+
     if (this.gain) {
       this.gain.disconnect();
     }
 
-    this.gain = undefined;
-    this.panner = undefined;
+    this.gain = null;
+    this.panner = null;
     this.source = null;
   };
 
@@ -184,8 +186,13 @@ export default class Sound{
   public destroy = () => {
     this.disconnect();
     this.buffer = null;
+    this.context = null;
+    this.gain = null;
+    this.panner = null;
     this.manager.freeSound(this);
   };
 
   public getFilePath = (): string => this.filePath;
+
+  public getBuffer = (): AudioBuffer => this.buffer;
 }

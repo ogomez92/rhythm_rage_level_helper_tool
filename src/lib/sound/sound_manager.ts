@@ -1,4 +1,5 @@
 import Sound from "@lib/sound/sound";
+import path from 'path';
 import SoundInformation from "@lib/sound/interfaces/sound_information";
 import TimeHelper from "../helpers/time_helper";
 
@@ -17,33 +18,39 @@ export default class SoundManager {
     this.panner.connect(this.context.destination);
   }
 
-  public create = async (filePath: string): Promise<Sound> => {
+  public create = async (filePath: string, fullPath = false): Promise<Sound> => {
+    let builtPath = path.join(this.basePath, filePath+`.${this.extension}`)
+
+    if (fullPath) {
+      builtPath = filePath;
+    }
+
     let buffer: AudioBuffer;
     let sound: Sound;
 
-    buffer = this.getBufferAtPath(`${this.basePath}/${filePath}.${this.extension}`);
+    buffer = this.getBufferAtPath(builtPath);
 
     if (buffer) {
-      const sound = new Sound(buffer, this.context, `${this.basePath}/${filePath}.${this.extension}`, this);
-      this.sounds.push({ buffer: buffer, path: `${this.basePath}/${filePath}.${this.extension}` });
+      const sound = new Sound(buffer, this.context, builtPath, this);
+      this.sounds.push({ buffer: buffer, path: builtPath });
 
       return sound;
     } else {
-      if (this.loadingPaths.includes(`${this.basePath}/${filePath}.${this.extension}`)) {
-        while (this.loadingPaths.includes(`${this.basePath}/${filePath}.${this.extension}`)) {
+      if (this.loadingPaths.includes(builtPath)) {
+        while (this.loadingPaths.includes(builtPath)) {
           await TimeHelper.sleep(25);
         }
 
-        buffer = this.getBufferAtPath(`${this.basePath}/${filePath}.${this.extension}`);
+        buffer = this.getBufferAtPath(builtPath);
 
         if (!buffer) {
           throw new Error(`Unable to load sound from a preloading buffer at ${this.basePath}/${filePath}.${this.extension}`);
         }
       } else {
-        buffer = await this.createBufferFromPath(`${this.basePath}/${filePath}.${this.extension}`);
+        buffer = await this.createBufferFromPath(builtPath);
       }
 
-      sound = new Sound(buffer, this.context, `${this.basePath}/${filePath}.${this.extension}`, this);
+      sound = new Sound(buffer, this.context, builtPath, this);
 
       return sound;
     }
@@ -82,6 +89,8 @@ export default class SoundManager {
   public freeSound = (sound: Sound) => {
     for (let i = 0; i < this.sounds.length; i++) {
       if (this.sounds[i].path === sound.getFilePath()) {
+        this.sounds[i].buffer = null;
+        this.sounds[i] = null;
         this.sounds.splice(i, 1);
         break;
       }
