@@ -22,7 +22,7 @@ export default class SoundManager {
     let builtPath = path.join(this.basePath, filePath+`.${this.extension}`)
 
     if (fullPathSpecified) {
-      builtPath = filePath;
+      builtPath = path.resolve(filePath);
     }
 
     let buffer: AudioBuffer;
