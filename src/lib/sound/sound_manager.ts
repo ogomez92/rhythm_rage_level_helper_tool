@@ -18,10 +18,10 @@ export default class SoundManager {
     this.panner.connect(this.context.destination);
   }
 
-  public create = async (filePath: string, fullPath = false): Promise<Sound> => {
+  public create = async (filePath: string, fullPathSpecified = false): Promise<Sound> => {
     let builtPath = path.join(this.basePath, filePath+`.${this.extension}`)
 
-    if (fullPath) {
+    if (fullPathSpecified) {
       builtPath = filePath;
     }
 
@@ -95,5 +95,10 @@ export default class SoundManager {
         break;
       }
     }
+  }
+
+  public loadBatch = async (paths: string[], fullPathSpecified = false): Promise<void> => {
+    const promises = paths.map((path) => this.create(path, fullPathSpecified));
+    await Promise.all(promises);
   }
 }
