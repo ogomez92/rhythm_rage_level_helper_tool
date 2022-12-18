@@ -4,6 +4,7 @@ class NativeDecoder implements AudioDecoder {
     context: AudioContext;
 
     constructor(context: AudioContext) {
+        console.log('using native webaudio decoder')
         this.context = context;
     }
 
@@ -16,7 +17,7 @@ class NativeDecoder implements AudioDecoder {
             arrayBuffer = null;
             return buffer;
         } catch (error) {
-            throw new Error(`Native audio decoder was unable to decode the file at ${path}`)
+            throw new Error(`Native audio decoder was unable to decode the file at ${path}: ${error}`)
         }
     }
 }

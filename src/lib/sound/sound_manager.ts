@@ -2,8 +2,7 @@ import Sound from "@lib/sound/sound";
 import path from 'path';
 import SoundInformation from "@lib/sound/interfaces/sound_information";
 import TimeHelper from "@lib/helpers/time_helper";
-import AudioDecoder from "@lib/sound/interfaces/AudioDecoder";
-import NativeDecoder from "@lib/sound/decoders/native_decoder";
+import DecoderProvider from "@lib/sound/decoders/decoder_provider";
 
 export default class SoundManager {
   private context: AudioContext;
@@ -49,7 +48,18 @@ export default class SoundManager {
           throw new Error(`Unable to load sound from a preloading buffer at ${this.basePath}/${filePath}.${this.extension}`);
         }
       } else {
-        buffer = await this.createBufferFromPath(builtPath);
+        this.loadingPaths.push(filePath);
+
+        const decoderProvider = new DecoderProvider(this.context);
+
+        try {
+          buffer = await decoderProvider.createBufferFromPath(builtPath);
+          this.sounds.push({ path: filePath, buffer: buffer });
+        } catch (error) {
+          throw new Error(`Unable to decode ${builtPath}: ${error}`)
+        } finally {
+          this.loadingPaths = this.loadingPaths.filter((path) => path !== filePath);
+        }
       }
 
       sound = new Sound(buffer, this.context, builtPath, this);
@@ -66,20 +76,7 @@ export default class SoundManager {
 
   public setExtension = (newExtension: string) => this.extension = newExtension;
 
-  private createBufferFromPath = async (filePath: string) => {
-    this.loadingPaths.push(filePath);
 
-    try {
-      const decoder: AudioDecoder = new NativeDecoder(this.context);
-      const audioBuffer = await decoder.decode(filePath);
-      this.sounds.push({ path: filePath, buffer: audioBuffer });
-      this.loadingPaths = this.loadingPaths.filter((path) => path !== filePath);
-      return audioBuffer;
-    } catch (error) {
-      this.loadingPaths = this.loadingPaths.filter((path) => path !== filePath);
-      throw new Error(`Unable to create buffer for ${filePath}: ${error}`);
-    }
-  };
 
   private getBufferAtPath = (path: string): AudioBuffer | undefined => {
     return this.sounds.find((sound) => sound.path === path)?.buffer;
@@ -103,5 +100,16 @@ export default class SoundManager {
     } catch (error) {
       throw new Error(`Error while batch loading: ${error}`)
     }
+  }
+
+  public playStream = async (filePath: string, fullPathSpecified = false) => {
+    let builtPath = path.join(this.basePath, filePath + `.${this.extension}`)
+
+    if (fullPathSpecified) {
+      builtPath = path.resolve(filePath);
+    }
+
+    const decoderProvider = new DecoderProvider(this.context);
+    return decoderProvider.playStream(builtPath);
   }
 }

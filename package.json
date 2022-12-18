@@ -36,7 +36,10 @@
   },
   "dependencies": {
     "@electron/remote": "^2.0.9",
+    "@wasm-audio-decoders/flac": "^0.1.0",
     "dotenv": "^16.0.3",
-    "electron": "^22.0.0"
+    "electron": "^22.0.0",
+    "mpg123-decoder": "^0.4.0",
+    "ogg-opus-decoder": "^1.5.0"
   }
 }

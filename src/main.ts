@@ -46,5 +46,6 @@ async function setup() {
   input.subscribe(EventType.CHARACTER_TYPED, letterSpeaker);
 
   const sm = new SoundManager();
-  await (await sm.create('stest/big')).play();
+  sm.setExtension('opus');
+  await (await sm.create('stest/peli')).play();
 }

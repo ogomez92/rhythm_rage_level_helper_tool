@@ -1,4 +1,4 @@
-const { app, BrowserWindow, webContents } = require('electron');
+const { app, BrowserWindow } = require('electron');
 const path = require('path');
 const url = require('url');
 
@@ -8,16 +8,13 @@ const createWindow = () => {
   const mainWindow = new BrowserWindow({
     webPreferences: {
       nodeIntegration: true,
-      enableRemoteModule: true,
+      nodeIntegrationInWorker: false,
       contextIsolation: false
     },
     width: 800,
     height: 600,
   });
   
-  const remote = require("@electron/remote/main")
-  remote.initialize()
-  remote.enable(mainWindow.webContents)
     // and load the index.html of the app.
     mainWindow.loadURL(url.format({
       pathname: path.join(__dirname, 'index.html'),
