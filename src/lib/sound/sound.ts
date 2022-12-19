@@ -99,7 +99,7 @@ export default class Sound {
     this.source = null;
   };
 
-  public fadeOut(milliseconds = this.fadeDuration): Promise<void> {
+  public async fadeOut(milliseconds = this.fadeDuration): Promise<void> {
     return new Promise((resolve) => {
       if (!this.gain) {
         this.setupGain();
@@ -114,7 +114,7 @@ export default class Sound {
     });
   }
 
-  public fadeIn(milliseconds = this.fadeDuration, toVolume = 1): Promise<void> {
+  public async fadeIn(milliseconds = this.fadeDuration, toVolume = 1): Promise<void> {
     return new Promise((resolve) => {
       if (!this.gain) {
         this.createGain();
@@ -158,7 +158,7 @@ export default class Sound {
     return this;
   };
 
-  public gradualSlowdown = (
+  public gradualSlowdown = async (
     milliseconds = this.fadeDuration,
     newPitchValue = 0
   ): Promise<void> => {
@@ -184,7 +184,7 @@ export default class Sound {
     return this;
   };
 
-  public speedUp = (milliseconds = this.fadeDuration, newPitchValue = 1): Promise<void> => {
+  public speedUp = async (milliseconds = this.fadeDuration, newPitchValue = 1): Promise<void> => {
     return new Promise((resolve) => {
       this.source.playbackRate.linearRampToValueAtTime(
         newPitchValue,
@@ -196,7 +196,7 @@ export default class Sound {
     });
   };
 
-  public stereoSweep = (duration: number, sweepSpeedMilliseconds: number): Promise<void> => {
+  public stereoSweep = async (duration: number, sweepSpeedMilliseconds: number): Promise<void> => {
     return new Promise((resolve) => {
     const sweepSpeed = sweepSpeedMilliseconds / 1000;
 
