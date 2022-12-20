@@ -6,7 +6,6 @@ export default class Sound {
   private source: AudioBufferSourceNode;
   private startTime: number;
   private position = 0;
-  private fadeDuration = 600;
   private context: AudioContext;
   private playing = false;
 
@@ -26,6 +25,7 @@ export default class Sound {
     path: string,
     manager: SoundManager
   ) {
+
     this.buffer = buffer;
     this.context = context;
     this.filePath = path;
@@ -57,14 +57,14 @@ export default class Sound {
 
   public setPitch = (newPitch: number): Sound => {
     this.pitch = newPitch;
-    this.createSource();
+    this.makeAudioChain();
     this.setSoundValues();
     this.source.playbackRate.value = this.pitch;
 
     return this;
   };
 
-  private disconnect = () => {
+  private breakChain = () => {
     if (this.source) {
       this.source.stop();
     }
@@ -76,8 +76,8 @@ export default class Sound {
   };
 
   public async volumeRamp(
-    milliseconds = this.fadeDuration,
-    toVolume = 0
+    milliseconds: number,
+    toVolume: number
   ): Promise<Sound> {
     this.gain.gain.linearRampToValueAtTime(
       toVolume,
@@ -92,20 +92,6 @@ export default class Sound {
     await TimeHelper.sleep(milliseconds);
     return Promise.resolve(this);
   }
-
-  public getFadeDuration = () => this.fadeDuration;
-
-  public setFadeDuration = (newFadeDuration: number): Sound => {
-    this.fadeDuration = newFadeDuration;
-    return this;
-  };
-
-  public pause = (): Sound => {
-    this.source.stop();
-    this.disconnect();
-
-    return this;
-  };
 
   public play = (position = 0): Sound => {
     this.startTime = this.context.currentTime;
@@ -122,7 +108,7 @@ export default class Sound {
       return;
     }
 
-    this.createSource();
+    this.makeAudioChain();
     this.source.start(0, this.startTime - position);
 
     this.playing = true;
@@ -130,18 +116,20 @@ export default class Sound {
   };
 
   public pitchRamp = async (
-    milliseconds = this.fadeDuration,
-    newPitchValue = 0
+    milliseconds: number,
+    toPitch: number
   ): Promise<Sound> => {
     this.source.playbackRate.linearRampToValueAtTime(
-      newPitchValue,
+      toPitch,
       this.context.currentTime + milliseconds / 1000
     );
 
     if (this.pitch == 0) {
       setTimeout(this.stop, milliseconds);
     }
+
     await TimeHelper.sleep(milliseconds);
+
     return Promise.resolve(this);
   };
 
@@ -153,7 +141,8 @@ export default class Sound {
     }
 
     this.source.stop();
-    this.disconnect();
+
+    this.breakChain();
 
     return this;
   };
@@ -180,7 +169,7 @@ export default class Sound {
   };
 
   public destroy = () => {
-    this.disconnect();
+    this.breakChain();
     this.buffer = null;
     this.context = null;
     this.manager.freeSound(this);
@@ -197,7 +186,7 @@ export default class Sound {
     }
   };
 
-  private createSource = (): Sound => {
+  private makeAudioChain = (): Sound => {
     if (this.source) {
       return this;
     }
