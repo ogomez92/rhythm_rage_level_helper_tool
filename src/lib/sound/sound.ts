@@ -10,12 +10,8 @@ export default class Sound {
   private playing = false;
 
   private tag: string;
-  private pan = 0.0;
   private pitch = 1.0;
-  private volume = 1.0;
   private isLooped = false;
-  private panner: StereoPannerNode;
-  private gain: GainNode;
   private filePath: string;
   private manager: SoundManager;
 
@@ -30,34 +26,12 @@ export default class Sound {
     this.context = context;
     this.filePath = path;
     this.manager = manager;
-    this.gain = new GainNode(this.context);
-    this.panner = new StereoPannerNode(this.context);
   }
-
-  public getPan = () => this.pan;
-
-  public setPan = (newPan: number): Sound => {
-    this.pan = newPan;
-    this.panner.pan.value = this.pan;
-
-    return this;
-  };
-
-  public getVolume = () => this.volume;
-
-  public setVolume = (newVolume: number): Sound => {
-    this.volume = newVolume;
-
-    this.gain.gain.value = this.volume;
-
-    return this;
-  };
 
   public getPitch = () => this.pitch;
 
   public setPitch = (newPitch: number): Sound => {
     this.pitch = newPitch;
-    this.makeAudioChain();
     this.setSoundValues();
     this.source.playbackRate.value = this.pitch;
 
@@ -70,28 +44,8 @@ export default class Sound {
     }
 
     this.source.disconnect();
-    this.panner.disconnect();
-    this.gain.disconnect();
     this.source = null;
   };
-
-  public async volumeRamp(
-    milliseconds: number,
-    toVolume: number
-  ): Promise<Sound> {
-    this.gain.gain.linearRampToValueAtTime(
-      toVolume,
-      this.context.currentTime + milliseconds / 1000
-    );
-
-    if (toVolume == 0) {
-      console.log("stop right there bitch!");
-      setTimeout(this.stop, milliseconds);
-    }
-
-    await TimeHelper.sleep(milliseconds);
-    return Promise.resolve(this);
-  }
 
   public play = (position = 0): Sound => {
     this.startTime = this.context.currentTime;
@@ -119,7 +73,7 @@ export default class Sound {
     milliseconds: number,
     toPitch: number
   ): Promise<Sound> => {
-    this.source.playbackRate.linearRampToValueAtTime(
+    this.source.playbackRate.exponentialRampToValueAtTime(
       toPitch,
       this.context.currentTime + milliseconds / 1000
     );
@@ -145,27 +99,6 @@ export default class Sound {
     this.breakChain();
 
     return this;
-  };
-
-  public stereoSweep = async (
-    duration: number,
-    sweepSpeedMilliseconds: number
-  ): Promise<Sound> => {
-    const sweepSpeed = sweepSpeedMilliseconds / 1000;
-
-    for (let i = 0; i <= duration; i += sweepSpeed) {
-      this.panner.pan.linearRampToValueAtTime(1, this.context.currentTime + i);
-      this.panner.pan.linearRampToValueAtTime(
-        -1,
-        this.context.currentTime + i + sweepSpeed
-      );
-    }
-    this.panner.pan.linearRampToValueAtTime(
-      0,
-      this.context.currentTime + duration + sweepSpeed
-    );
-    await TimeHelper.sleep(duration);
-    return Promise.resolve(this);
   };
 
   public destroy = () => {
@@ -194,8 +127,6 @@ export default class Sound {
     this.source = this.context.createBufferSource();
     this.source.buffer = this.buffer;
     this.setSoundValues();
-    this.source.connect(this.gain).connect(this.panner);
-    this.panner.connect(this.context.destination);
     return this;
   };
 
@@ -204,8 +135,6 @@ export default class Sound {
   private setSoundValues = () => {
     this.source.loop = this.isLooped;
     this.source.playbackRate.value = this.pitch;
-    this.panner.pan.value = this.pan;
-    this.gain.gain.value = this.volume;
   };
 
   public getCurrentTime = (): number => {
@@ -221,4 +150,8 @@ export default class Sound {
     this.stop();
     this.play(this.startTime - position / 1000);
   };
+
+  public getTag = () => this.tag;
+
+  public setTag = (tag: string) => this.tag = tag;
 }
