@@ -1,6 +1,6 @@
 import * as dotenv from "dotenv";
-import * as fs from 'fs';
-import path from 'path';
+import * as fs from "fs";
+import path from "path";
 
 import EventType from "./lib/events/enums/event_type";
 import EventNotification from "./lib/events/interfaces/event_notification";
@@ -46,12 +46,12 @@ async function setup() {
   input.subscribe(EventType.CHARACTER_TYPED, letterSpeaker);
 
   const sm = new SoundManager();
-  sm.setExtension('mp3')
-  const test = await sm.create('stest/bs')
+  sm.setExtension("mp3");
+  const test = await sm.create("stest/bs");
   test.play();
-  await test.gradualSlowdown(500)
+  await test.gradualSlowdown(500);
   test.play();
   test.setPitch(1);
-  test.setPan(-1)
-  test.setVolume(0.5);
+  test.setVolume(0.2);
+  test.setPan(-1);
 }

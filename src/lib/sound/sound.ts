@@ -4,7 +4,8 @@ import TimeHelper from "../helpers/time_helper";
 export default class Sound {
   private buffer: AudioBuffer;
   private source: AudioBufferSourceNode;
-  private fadeDuration = 400;
+  private additionalNodes: AudioNode[] = [];
+  private fadeDuration = 600;
   private context: AudioContext;
   private tag: string;
   private pan = 0.0;
@@ -34,10 +35,11 @@ export default class Sound {
   private createPanner = () => {
     console.log('setting up pan');
     this.panner = new StereoPannerNode(this.context);
+    this.additionalNodes.push(this.panner);
     this.source.disconnect();
-    this.source.connect(this.panner);
-    this.panner.pan.setValueAtTime(this.pan, this.context.currentTime);
+    this.connectNodesToSource();
     this.panner.connect(this.context.destination);
+    this.panner.pan.setValueAtTime(this.pan, this.context.currentTime);
   }
 
   private setupGain = () => {
@@ -51,10 +53,11 @@ export default class Sound {
   private createGain = () => {
     console.log('setting up gain')
     this.gain = new GainNode(this.context);
-    this.gain.gain.setValueAtTime(this.volume, this.context.currentTime);
+    this.additionalNodes.push(this.gain);
     this.source.disconnect();
-    this.source.connect(this.gain);
+    this.connectNodesToSource();
     this.gain.connect(this.context.destination);
+    this.gain.gain.setValueAtTime(this.volume, this.context.currentTime);
   }
 
   public getPan = () => this.pan;
@@ -100,17 +103,10 @@ export default class Sound {
 
   private disconnect = () => {
     this.source.stop();
+
+    this.disconnectNodesFromSource();
+
     this.source.disconnect();
-    if (this.panner) {
-      this.panner.disconnect();
-    }
-
-    if (this.gain) {
-      this.gain.disconnect();
-    }
-
-    this.gain = null;
-    this.panner = null;
     this.source = null;
   };
 
@@ -236,8 +232,6 @@ export default class Sound {
     this.disconnect();
     this.buffer = null;
     this.context = null;
-    this.gain = null;
-    this.panner = null;
     this.manager.freeSound(this);
   };
 
@@ -250,6 +244,25 @@ export default class Sound {
     if (this.source) {
       this.source.loop = this.isLooped;
     }
+
+  }
+
+  private connectNodesToSource = () => {
+    console.log('connecting nodes'+this.additionalNodes.length)
+    let nodeToConnectTo: AudioNode | AudioBufferSourceNode = this.source;
+
+    for (let i = 0; i < this.additionalNodes.length; i++) {
+      nodeToConnectTo.connect(this.additionalNodes[i]);
+      nodeToConnectTo = this.additionalNodes[i];
+    }
+  }
+
+  private disconnectNodesFromSource = () => {
+    console.log('disconnecting nodes'+this.additionalNodes.length)
+    for (let i = 0; i < this.additionalNodes.length; i++) {
+      this.source.disconnect(this.additionalNodes[i]);
+    }
+    this.additionalNodes = [];
 
   }
 }
