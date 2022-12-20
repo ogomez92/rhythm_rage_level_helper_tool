@@ -1,7 +1,5 @@
-import AudioDecoder from "@lib/sound/interfaces/AudioDecoder";
 import NativeDecoder from "@lib/sound/decoders/native_decoder";
-import MpegDecoder from "@lib/sound/decoders/mpeg_decoder";
-import OpusDecoder from "@lib/sound/decoders/opus_decoder";
+import HTMLStreamer from "@lib/sound/decoders/html_streamer";
 
 export default class DecoderProvider {
     private context: AudioContext;
@@ -10,54 +8,32 @@ export default class DecoderProvider {
         this.context = context;
     }
 
-    public createBufferFromPath = async (filePath: string) => {
-        const extension = filePath.split(".").pop().toLowerCase();
-        let decoder: AudioDecoder;
+    public createBufferFromPath = async (filePath: string): Promise<AudioBuffer> => {
+        const start = performance.now();
 
         try {
-            switch (extension) {
-                case 'mp3':
-                    decoder = new MpegDecoder(this.context);
-                    break;
-                case 'opus':
-                    decoder = new OpusDecoder(this.context);
-                    break;
-
-                default:
-                    decoder = new NativeDecoder(this.context);
-                    break;
-
-            }
+            const decoder = new NativeDecoder(this.context);
 
             const audioBuffer = await decoder.decode(filePath);
-
+            console.log(`Decoding took ${performance.now() - start} ms.`)
             return audioBuffer;
         } catch (error) {
             throw new Error(`Unable to create buffer for ${filePath}: ${error}`);
         }
     };
 
-    public playStream = async (path: string) => {
-        const extension = path.split(".").pop().toLowerCase();
-        let decoder: AudioDecoder;
+    public createHTMLStreamFromPath = (filePath: string): HTMLAudioElement => {
+        const start = performance.now();
 
         try {
-            switch (extension) {
-                case 'mp3':
-                    decoder = new MpegDecoder(this.context);
-                    break;
-                case 'opus':
-                    decoder = new OpusDecoder(this.context);
-                    break;
+            const decoder = new HTMLStreamer(this.context);
 
-                default:
-                    throw new Error('This extension does not have any decoders which support streaming')
-                    break;
-            }
-
-            return decoder.streamFile(path);
-        } catch {
-            throw new Error(`Failed to stream file at ${path}: ${Error}`)
+            const audioElement = decoder.stream(filePath);
+            console.log(`Decoding took ${performance.now() - start} ms.`)
+            return audioElement;
+        } catch (error) {
+            throw new Error(`Unable to create buffer for ${filePath}: ${error}`);
         }
-    }
+    };
+
 }

@@ -198,23 +198,23 @@ export default class Sound {
 
   public stereoSweep = async (duration: number, sweepSpeedMilliseconds: number): Promise<void> => {
     return new Promise((resolve) => {
-    const sweepSpeed = sweepSpeedMilliseconds / 1000;
+      const sweepSpeed = sweepSpeedMilliseconds / 1000;
 
-    this.createPanner();
+      this.createPanner();
 
-    for (let i = 0; i <= duration; i += sweepSpeed) {
-      this.panner.pan.linearRampToValueAtTime(1, this.context.currentTime + i);
+      for (let i = 0; i <= duration; i += sweepSpeed) {
+        this.panner.pan.linearRampToValueAtTime(1, this.context.currentTime + i);
+        this.panner.pan.linearRampToValueAtTime(
+          -1,
+          this.context.currentTime + i + sweepSpeed
+        );
+      }
       this.panner.pan.linearRampToValueAtTime(
-        -1,
-        this.context.currentTime + i + sweepSpeed
+        0,
+        this.context.currentTime + duration + sweepSpeed
       );
-    }
-    this.panner.pan.linearRampToValueAtTime(
-      0,
-      this.context.currentTime + duration + sweepSpeed
-    );
 
-    setTimeout(resolve, duration);
+      setTimeout(resolve, duration);
     });
   };
 
@@ -230,4 +230,12 @@ export default class Sound {
   public getFilePath = (): string => this.filePath;
 
   public getBuffer = (): AudioBuffer => this.buffer;
+
+  public setLooped = (newValue: boolean) => {
+    this.isLooped = newValue;
+    if (this.source) {
+      this.source.loop = this.isLooped;
+    }
+
+  }
 }

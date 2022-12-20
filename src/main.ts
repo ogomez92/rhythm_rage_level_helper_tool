@@ -46,6 +46,9 @@ async function setup() {
   input.subscribe(EventType.CHARACTER_TYPED, letterSpeaker);
 
   const sm = new SoundManager();
-  sm.setExtension('opus');
-  await (await sm.create('stest/peli')).play();
+  const ac = new AudioContext();
+  sm.setExtension('mp3');
+  const test = await sm.create('stest/bs');
+  test.play();
+  test.setPitch(1.1)
 }

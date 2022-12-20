@@ -102,7 +102,7 @@ export default class SoundManager {
     }
   }
 
-  public playStream = async (filePath: string, fullPathSpecified = false) => {
+  public createStream = (filePath: string, fullPathSpecified = false) => {
     let builtPath = path.join(this.basePath, filePath + `.${this.extension}`)
 
     if (fullPathSpecified) {
@@ -110,6 +110,6 @@ export default class SoundManager {
     }
 
     const decoderProvider = new DecoderProvider(this.context);
-    return decoderProvider.playStream(builtPath);
+    return decoderProvider.createHTMLStreamFromPath(builtPath);
   }
 }

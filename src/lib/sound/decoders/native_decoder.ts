@@ -1,6 +1,4 @@
-import AudioDecoder from "@lib/sound/interfaces/AudioDecoder";
-
-class NativeDecoder implements AudioDecoder {
+class NativeDecoder {
     context: AudioContext;
 
     constructor(context: AudioContext) {
@@ -12,9 +10,11 @@ class NativeDecoder implements AudioDecoder {
         try {
             let response = await fetch(path);
             let arrayBuffer = await response.arrayBuffer();
-            response = null;
+
             const buffer = await this.context.decodeAudioData(arrayBuffer)
+            response = null;
             arrayBuffer = null;
+
             return buffer;
         } catch (error) {
             throw new Error(`Native audio decoder was unable to decode the file at ${path}: ${error}`)
