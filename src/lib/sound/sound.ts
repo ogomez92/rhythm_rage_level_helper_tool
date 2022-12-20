@@ -4,9 +4,12 @@ import TimeHelper from "../helpers/time_helper";
 export default class Sound {
   private buffer: AudioBuffer;
   private source: AudioBufferSourceNode;
-  private additionalNodes: AudioNode[] = [];
+  private startTime: number;
+  private position = 0;
   private fadeDuration = 600;
   private context: AudioContext;
+  private playing = false;
+
   private tag: string;
   private pan = 0.0;
   private pitch = 1.0;
@@ -17,60 +20,26 @@ export default class Sound {
   private filePath: string;
   private manager: SoundManager;
 
-  constructor(buffer: AudioBuffer, context: AudioContext, path: string, manager: SoundManager) {
+  constructor(
+    buffer: AudioBuffer,
+    context: AudioContext,
+    path: string,
+    manager: SoundManager
+  ) {
     this.buffer = buffer;
     this.context = context;
     this.filePath = path;
     this.manager = manager;
-  }
-
-  private setupPan = () => {
-    if (this.panner || this.pan == 0.0) {
-      return;
-    }
-
-    this.createPanner();
-  };
-
-  private createPanner = () => {
-    console.log('setting up pan');
-    this.panner = new StereoPannerNode(this.context);
-    this.additionalNodes.push(this.panner);
-    this.source.disconnect();
-    this.connectNodesToSource();
-    this.panner.connect(this.context.destination);
-    this.panner.pan.setValueAtTime(this.pan, this.context.currentTime);
-  }
-
-  private setupGain = () => {
-    if (this.gain || this.volume == 1.0) {
-      return;
-    }
-
-    this.createGain();
-  };
-
-  private createGain = () => {
-    console.log('setting up gain')
     this.gain = new GainNode(this.context);
-    this.additionalNodes.push(this.gain);
-    this.source.disconnect();
-    this.connectNodesToSource();
-    this.gain.connect(this.context.destination);
-    this.gain.gain.setValueAtTime(this.volume, this.context.currentTime);
+    this.panner = new StereoPannerNode(this.context);
   }
 
   public getPan = () => this.pan;
 
   public setPan = (newPan: number): Sound => {
     this.pan = newPan;
-    this.setupPan();
+    this.panner.pan.value = this.pan;
 
-    if (this.pan == 0.0) {
-      return this;
-    }
-
-    this.panner.pan.setValueAtTime(this.pan, this.context.currentTime);
     return this;
   };
 
@@ -78,13 +47,8 @@ export default class Sound {
 
   public setVolume = (newVolume: number): Sound => {
     this.volume = newVolume;
-    this.setupGain();
 
-    if (this.volume == 1.0) {
-      return this;
-    }
-
-    this.gain.gain.setValueAtTime(this.volume, this.context.currentTime);
+    this.gain.gain.value = this.volume;
 
     return this;
   };
@@ -93,58 +57,48 @@ export default class Sound {
 
   public setPitch = (newPitch: number): Sound => {
     this.pitch = newPitch;
-    this.source.playbackRate.setValueAtTime(
-      this.pitch,
-      this.context.currentTime
-    );
+    this.createSource();
+    this.setSoundValues();
+    this.source.playbackRate.value = this.pitch;
 
     return this;
   };
 
   private disconnect = () => {
-    this.source.stop();
-
-    this.disconnectNodesFromSource();
+    if (this.source) {
+      this.source.stop();
+    }
 
     this.source.disconnect();
+    this.panner.disconnect();
+    this.gain.disconnect();
     this.source = null;
   };
 
-  public async fadeOut(milliseconds = this.fadeDuration): Promise<void> {
-    return new Promise((resolve) => {
-      if (!this.gain) {
-        this.setupGain();
-      }
+  public async volumeRamp(
+    milliseconds = this.fadeDuration,
+    toVolume = 0
+  ): Promise<Sound> {
+    this.gain.gain.linearRampToValueAtTime(
+      toVolume,
+      this.context.currentTime + milliseconds / 1000
+    );
 
-      this.gain.gain.linearRampToValueAtTime(
-        0,
-        this.context.currentTime + milliseconds / 1000
-      );
+    if (toVolume == 0) {
+      console.log("stop right there bitch!");
       setTimeout(this.stop, milliseconds);
-      setTimeout(resolve, milliseconds)
-    });
-  }
+    }
 
-  public async fadeIn(milliseconds = this.fadeDuration, toVolume = 1): Promise<void> {
-    return new Promise((resolve) => {
-      if (!this.gain) {
-        this.createGain();
-      }
-
-      this.gain.gain.linearRampToValueAtTime(
-        toVolume,
-        this.context.currentTime + milliseconds / 1000
-      );
-      setTimeout(resolve, milliseconds)
-    });
+    await TimeHelper.sleep(milliseconds);
+    return Promise.resolve(this);
   }
 
   public getFadeDuration = () => this.fadeDuration;
 
   public setFadeDuration = (newFadeDuration: number): Sound => {
-    (this.fadeDuration = newFadeDuration);
+    this.fadeDuration = newFadeDuration;
     return this;
-  }
+  };
 
   public pause = (): Sound => {
     this.source.stop();
@@ -153,23 +107,29 @@ export default class Sound {
     return this;
   };
 
-  public play = (): Sound => {
-    this.source = this.context.createBufferSource();
-    this.source.buffer = this.buffer;
-    this.source.loop = this.isLooped;
-    this.source.playbackRate.setValueAtTime(
-      this.pitch,
-      this.context.currentTime
-    );
-    this.source.connect(this.context.destination);
-    this.setupPan();
-    this.setupGain();
-    this.source.start();
+  public play = (position = 0): Sound => {
+    this.startTime = this.context.currentTime;
 
+    if (!this.buffer) {
+      throw new Error(
+        `This sound was previously destroyed and must be recreated`
+      );
+    }
+
+    if (this.playing) {
+      this.setSoundValues();
+      this.seek(0);
+      return;
+    }
+
+    this.createSource();
+    this.source.start(0, this.startTime - position);
+
+    this.playing = true;
     return this;
   };
 
-  public gradualSlowdown = async (
+  public pitchRamp = async (
     milliseconds = this.fadeDuration,
     newPitchValue = 0
   ): Promise<Sound> => {
@@ -177,8 +137,6 @@ export default class Sound {
       newPitchValue,
       this.context.currentTime + milliseconds / 1000
     );
-
-    this.pitch = newPitchValue;
 
     if (this.pitch == 0) {
       setTimeout(this.stop, milliseconds);
@@ -188,44 +146,37 @@ export default class Sound {
   };
 
   public stop = (): Sound => {
+    this.playing = false;
+
+    if (!this.source) {
+      return;
+    }
+
     this.source.stop();
     this.disconnect();
 
     return this;
   };
 
-  public speedUp = async (milliseconds = this.fadeDuration, newPitchValue = 1): Promise<void> => {
-    return new Promise((resolve) => {
-      this.source.playbackRate.linearRampToValueAtTime(
-        newPitchValue,
-        this.context.currentTime + milliseconds / 1000
-      );
-      this.pitch = newPitchValue;
+  public stereoSweep = async (
+    duration: number,
+    sweepSpeedMilliseconds: number
+  ): Promise<Sound> => {
+    const sweepSpeed = sweepSpeedMilliseconds / 1000;
 
-      setTimeout(resolve, milliseconds);
-    });
-  };
-
-  public stereoSweep = async (duration: number, sweepSpeedMilliseconds: number): Promise<void> => {
-    return new Promise((resolve) => {
-      const sweepSpeed = sweepSpeedMilliseconds / 1000;
-
-      this.createPanner();
-
-      for (let i = 0; i <= duration; i += sweepSpeed) {
-        this.panner.pan.linearRampToValueAtTime(1, this.context.currentTime + i);
-        this.panner.pan.linearRampToValueAtTime(
-          -1,
-          this.context.currentTime + i + sweepSpeed
-        );
-      }
+    for (let i = 0; i <= duration; i += sweepSpeed) {
+      this.panner.pan.linearRampToValueAtTime(1, this.context.currentTime + i);
       this.panner.pan.linearRampToValueAtTime(
-        0,
-        this.context.currentTime + duration + sweepSpeed
+        -1,
+        this.context.currentTime + i + sweepSpeed
       );
-
-      setTimeout(resolve, duration);
-    });
+    }
+    this.panner.pan.linearRampToValueAtTime(
+      0,
+      this.context.currentTime + duration + sweepSpeed
+    );
+    await TimeHelper.sleep(duration);
+    return Promise.resolve(this);
   };
 
   public destroy = () => {
@@ -244,25 +195,41 @@ export default class Sound {
     if (this.source) {
       this.source.loop = this.isLooped;
     }
+  };
 
-  }
-
-  private connectNodesToSource = () => {
-    console.log('connecting nodes'+this.additionalNodes.length)
-    let nodeToConnectTo: AudioNode | AudioBufferSourceNode = this.source;
-
-    for (let i = 0; i < this.additionalNodes.length; i++) {
-      nodeToConnectTo.connect(this.additionalNodes[i]);
-      nodeToConnectTo = this.additionalNodes[i];
+  private createSource = (): Sound => {
+    if (this.source) {
+      return this;
     }
-  }
 
-  private disconnectNodesFromSource = () => {
-    console.log('disconnecting nodes'+this.additionalNodes.length)
-    for (let i = 0; i < this.additionalNodes.length; i++) {
-      this.source.disconnect(this.additionalNodes[i]);
+    this.source = this.context.createBufferSource();
+    this.source.buffer = this.buffer;
+    this.setSoundValues();
+    this.source.connect(this.gain).connect(this.panner);
+    this.panner.connect(this.context.destination);
+    return this;
+  };
+
+  public isPlaying = (): boolean => this.source && this.playing;
+
+  private setSoundValues = () => {
+    this.source.loop = this.isLooped;
+    this.source.playbackRate.value = this.pitch;
+    this.panner.pan.value = this.pan;
+    this.gain.gain.value = this.volume;
+  };
+
+  public getCurrentTime = (): number => {
+    if (!this.source) {
+      return 0;
     }
-    this.additionalNodes = [];
 
-  }
+    return ((this.context.currentTime - this.startTime) * 1000) + this.position;
+  };
+
+  public seek = (position: number) => {
+    this.position = position;
+    this.stop();
+    this.play(this.startTime - position / 1000);
+  };
 }

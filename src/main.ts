@@ -47,11 +47,8 @@ async function setup() {
 
   const sm = new SoundManager();
   sm.setExtension("mp3");
-  const test = await sm.create("stest/bs");
+  const test = await sm.create("stest/radio")
   test.play();
-  await test.gradualSlowdown(500);
+  test.setVolume(0.1)
   test.play();
-  test.setPitch(1);
-  test.setVolume(0.2);
-  test.setPan(-1);
 }
