@@ -46,9 +46,12 @@ async function setup() {
   input.subscribe(EventType.CHARACTER_TYPED, letterSpeaker);
 
   const sm = new SoundManager();
-  const ac = new AudioContext();
-  sm.setExtension('mp3');
-  const test = await sm.create('stest/bs');
+  sm.setExtension('mp3')
+  const test = await sm.create('stest/bs')
   test.play();
-  test.setPitch(1.1)
+  await test.gradualSlowdown(500)
+  test.play();
+  test.setPitch(1);
+  test.setPan(-1)
+  test.setVolume(0.5);
 }

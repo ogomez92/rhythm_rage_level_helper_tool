@@ -1,4 +1,5 @@
 import SoundManager from "@lib/sound/sound_manager";
+import TimeHelper from "../helpers/time_helper";
 
 export default class Sound {
   private buffer: AudioBuffer;
@@ -33,6 +34,7 @@ export default class Sound {
   private createPanner = () => {
     console.log('setting up pan');
     this.panner = new StereoPannerNode(this.context);
+    this.source.disconnect();
     this.source.connect(this.panner);
     this.panner.pan.setValueAtTime(this.pan, this.context.currentTime);
     this.panner.connect(this.context.destination);
@@ -42,12 +44,15 @@ export default class Sound {
     if (this.gain || this.volume == 1.0) {
       return;
     }
+
+    this.createGain();
   };
 
   private createGain = () => {
     console.log('setting up gain')
     this.gain = new GainNode(this.context);
     this.gain.gain.setValueAtTime(this.volume, this.context.currentTime);
+    this.source.disconnect();
     this.source.connect(this.gain);
     this.gain.connect(this.context.destination);
   }
@@ -57,6 +62,11 @@ export default class Sound {
   public setPan = (newPan: number): Sound => {
     this.pan = newPan;
     this.setupPan();
+
+    if (this.pan == 0.0) {
+      return this;
+    }
+
     this.panner.pan.setValueAtTime(this.pan, this.context.currentTime);
     return this;
   };
@@ -66,6 +76,11 @@ export default class Sound {
   public setVolume = (newVolume: number): Sound => {
     this.volume = newVolume;
     this.setupGain();
+
+    if (this.volume == 1.0) {
+      return this;
+    }
+
     this.gain.gain.setValueAtTime(this.volume, this.context.currentTime);
 
     return this;
@@ -161,20 +176,19 @@ export default class Sound {
   public gradualSlowdown = async (
     milliseconds = this.fadeDuration,
     newPitchValue = 0
-  ): Promise<void> => {
-    return new Promise((resolve) => {
-      this.source.playbackRate.linearRampToValueAtTime(
-        newPitchValue,
-        this.context.currentTime + milliseconds / 1000
-      );
+  ): Promise<Sound> => {
+    this.source.playbackRate.linearRampToValueAtTime(
+      newPitchValue,
+      this.context.currentTime + milliseconds / 1000
+    );
 
-      this.pitch = newPitchValue;
+    this.pitch = newPitchValue;
 
-      if (this.pitch == 0) {
-        setTimeout(this.stop, milliseconds);
-      }
-      setTimeout(resolve, milliseconds)
-    });
+    if (this.pitch == 0) {
+      setTimeout(this.stop, milliseconds);
+    }
+    await TimeHelper.sleep(milliseconds);
+    return Promise.resolve(this);
   };
 
   public stop = (): Sound => {

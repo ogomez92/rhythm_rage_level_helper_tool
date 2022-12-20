@@ -10,13 +10,9 @@ export default class SoundManager {
   private sounds: SoundInformation[] = [];
   private loadingPaths: string[] = [];
   private extension = 'ogg';
-  private panner: StereoPannerNode;
 
   constructor() {
     this.context = new AudioContext();
-    // Create a dummy panner, otherwise the first panned sound delays a bit
-    this.panner = new StereoPannerNode(this.context);
-    this.panner.connect(this.context.destination);
   }
 
   public create = async (filePath: string, fullPathSpecified = false): Promise<Sound> => {
