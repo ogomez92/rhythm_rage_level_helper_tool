@@ -44,11 +44,12 @@ async function setup() {
   const input = new KeyboardInput();
   const letterSpeaker = new LetterSpeaker();
   input.subscribe(EventType.CHARACTER_TYPED, letterSpeaker);
-
   const sm = new SoundManager();
-  sm.setExtension("mp3");
-  const test = await sm.create("stest/radio")
-  test.play();
-  test.setVolume(0.1)
-  test.play();
+  sm.setExtension('mp3');
+  const timeStart = performance.now();
+  const snd = await sm.create('stest/bs')
+  // snd.setPan(1);
+  // snd.setVolume(0.3);
+  snd.play();
+  console.log(`It took ${performance.now() - timeStart}`)
 }
