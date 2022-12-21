@@ -30,7 +30,7 @@ export default class Gain implements Effect {
     }
 
     public ramp = async (milliseconds: number, toValue: number): Promise<Effect> => {
-        this.effectNode.gain.exponentialRampToValueAtTime(
+        this.effectNode.gain.linearRampToValueAtTime(
             toValue,
             this.context.currentTime + milliseconds / 1000
         );
@@ -50,14 +50,14 @@ export default class Gain implements Effect {
         const sweepSpeed = speed / 1000;
 
         for (let i = 0; i <= duration; i += sweepSpeed) {
-            this.effectNode.gain.exponentialRampToValueAtTime(from, this.context.currentTime + i);
-            this.effectNode.gain.exponentialRampToValueAtTime(
+            this.effectNode.gain.linearRampToValueAtTime(from, this.context.currentTime + i);
+            this.effectNode.gain.linearRampToValueAtTime(
                 to,
                 this.context.currentTime + i + sweepSpeed
             );
         }
         
-        this.effectNode.gain.exponentialRampToValueAtTime(
+        this.effectNode.gain.linearRampToValueAtTime(
             oldValue,
             this.context.currentTime + duration + sweepSpeed
         );

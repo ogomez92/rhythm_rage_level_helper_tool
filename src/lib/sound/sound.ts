@@ -31,6 +31,7 @@ export default class Sound {
     this.filePath = path;
     this.manager = manager;
     this.effectProvider = new EffectProvider(this.context);
+    this.effects = [];
   }
 
   public getPitch = () => this.pitch;
@@ -86,7 +87,7 @@ export default class Sound {
       throw new Error(`Called pitch ramp while source was not playing`);
     }
 
-    this.source.playbackRate.exponentialRampToValueAtTime(
+    this.source.playbackRate.linearRampToValueAtTime(
       toPitch,
       this.context.currentTime + milliseconds / 1000
     );

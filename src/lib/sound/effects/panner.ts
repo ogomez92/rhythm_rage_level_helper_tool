@@ -30,7 +30,7 @@ export default class Panner implements Effect {
     }
 
     public ramp = async (milliseconds: number, toValue: number): Promise<Effect> => {
-        this.effectNode.pan.exponentialRampToValueAtTime(
+        this.effectNode.pan.linearRampToValueAtTime(
             toValue,
             this.context.currentTime + milliseconds / 1000
         );
@@ -50,13 +50,13 @@ export default class Panner implements Effect {
         const sweepSpeed = speed / 1000;
 
         for (let i = 0; i <= duration; i += sweepSpeed) {
-            this.effectNode.pan.exponentialRampToValueAtTime(from, this.context.currentTime + i);
-            this.effectNode.pan.exponentialRampToValueAtTime(
+            this.effectNode.pan.linearRampToValueAtTime(from, this.context.currentTime + i);
+            this.effectNode.pan.linearRampToValueAtTime(
                 to,
                 this.context.currentTime + i + sweepSpeed
             );
         }
-        this.effectNode.pan.exponentialRampToValueAtTime(
+        this.effectNode.pan.linearRampToValueAtTime(
             oldValue,
             this.context.currentTime + duration + sweepSpeed
         );
