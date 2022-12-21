@@ -1,5 +1,8 @@
 import SoundManager from "@lib/sound/sound_manager";
 import TimeHelper from "../helpers/time_helper";
+import EffectProvider from "@lib/sound/effects/effect_provider";
+import EffectType from "@lib/sound/enums/effect_type";
+import Effect from "@lib/sound/interfaces/effect";
 
 export default class Sound {
   private buffer: AudioBuffer;
@@ -8,7 +11,8 @@ export default class Sound {
   private position = 0;
   private context: AudioContext;
   private playing = false;
-
+  private effectProvider: EffectProvider
+  private effects: Effect[];
   private tag: string;
   private pitch = 1.0;
   private isLooped = false;
@@ -26,14 +30,19 @@ export default class Sound {
     this.context = context;
     this.filePath = path;
     this.manager = manager;
+    this.effectProvider = new EffectProvider(this.context);
   }
 
   public getPitch = () => this.pitch;
 
   public setPitch = (newPitch: number): Sound => {
     this.pitch = newPitch;
-    this.setSoundValues();
-    this.source.playbackRate.value = this.pitch;
+
+    if (!this.source) {
+      return;
+    }
+
+    this.configureSource();
 
     return this;
   };
@@ -41,9 +50,10 @@ export default class Sound {
   private breakChain = () => {
     if (this.source) {
       this.source.stop();
+      this.killEffects();
+      this.source.disconnect();
     }
 
-    this.source.disconnect();
     this.source = null;
   };
 
@@ -57,8 +67,7 @@ export default class Sound {
     }
 
     if (this.playing) {
-      this.setSoundValues();
-      this.seek(0);
+      this.configureSource();
       return;
     }
 
@@ -73,12 +82,16 @@ export default class Sound {
     milliseconds: number,
     toPitch: number
   ): Promise<Sound> => {
+    if (!this.playing) {
+      throw new Error(`Called pitch ramp while source was not playing`);
+    }
+
     this.source.playbackRate.exponentialRampToValueAtTime(
       toPitch,
       this.context.currentTime + milliseconds / 1000
     );
 
-    if (this.pitch == 0) {
+    if (toPitch == 0) {
       setTimeout(this.stop, milliseconds);
     }
 
@@ -89,6 +102,7 @@ export default class Sound {
 
   public stop = (): Sound => {
     this.playing = false;
+    this.position = 0;
 
     if (!this.source) {
       return;
@@ -102,7 +116,11 @@ export default class Sound {
   };
 
   public destroy = () => {
-    this.breakChain();
+    if (this.source) {
+      this.source.stop();
+      this.breakChain();
+    }
+
     this.buffer = null;
     this.context = null;
     this.manager.freeSound(this);
@@ -114,25 +132,27 @@ export default class Sound {
 
   public setLooped = (newValue: boolean) => {
     this.isLooped = newValue;
+
     if (this.source) {
-      this.source.loop = this.isLooped;
+      this.configureSource();
     }
   };
 
   private makeAudioChain = (): Sound => {
     if (this.source) {
-      return this;
+      this.breakChain();
     }
 
     this.source = this.context.createBufferSource();
     this.source.buffer = this.buffer;
-    this.setSoundValues();
+    this.configureSource();
+    this.addEffectsAndConnectToDestination();
     return this;
   };
 
   public isPlaying = (): boolean => this.source && this.playing;
 
-  private setSoundValues = () => {
+  private configureSource = () => {
     this.source.loop = this.isLooped;
     this.source.playbackRate.value = this.pitch;
   };
@@ -154,4 +174,50 @@ export default class Sound {
   public getTag = () => this.tag;
 
   public setTag = (tag: string) => this.tag = tag;
+
+  private addEffectsAndConnectToDestination = () => {
+    if (this.effects.length == 0) {
+      this.source.connect(this.context.destination);
+      return;
+    }
+
+    this.source.connect(this.effects[0].getNode());
+
+    for (let i = 0; i < this.effects.length - 1; i++) {
+      this.effects[i].connect(this.effects[i + 1].getNode());
+    }
+
+    this.effects[this.effects.length - 1].connect(this.context.destination);
+  }
+
+  public removeEffect = (effect: Effect) => {
+    const index = this.effects.indexOf(effect);
+
+    if (index == -1) {
+      return;
+    }
+
+    this.effects.splice(index, 1);
+
+    if (this.source) {
+      this.makeAudioChain();
+    }
+  }
+
+  private killEffects = () => {
+    this.effects = [];
+
+    this.makeAudioChain();
+  }
+
+  public addEffect = (type: EffectType): Effect => {
+    const effect = this.effectProvider.createEffect(type);
+    this.effects.push(effect);
+
+    if (this.source) {
+      this.makeAudioChain();
+    }
+
+    return effect;
+  }
 }

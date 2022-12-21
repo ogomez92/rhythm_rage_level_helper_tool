@@ -67,4 +67,5 @@ export default class Gain implements Effect {
         return Promise.resolve(this);
     };
 
+    public getNode = (): AudioNode => this.effectNode;
 }

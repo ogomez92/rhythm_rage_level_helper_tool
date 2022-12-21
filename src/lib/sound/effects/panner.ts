@@ -65,4 +65,6 @@ export default class Panner implements Effect {
 
         return Promise.resolve(this);
     };
+
+    public getNode = (): AudioNode => this.effectNode;
 }

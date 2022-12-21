@@ -1,4 +1,5 @@
 interface Effect {
+    getNode():AudioNode;
     connect(node: AudioNode): Effect;
     disconnect(): void;
     getValue(): number;
