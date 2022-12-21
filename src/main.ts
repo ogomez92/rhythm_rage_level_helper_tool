@@ -10,6 +10,8 @@ import SpeechManager from "@lib/speech/speech_manager";
 // import FileManager from "./managers/file_manager";
 import SoundManager from "@lib/sound/sound_manager";
 import TimeHelper from "./lib/helpers/time_helper";
+import Effect from "./lib/sound/interfaces/effect";
+import EffectType from "./lib/sound/enums/effect_type";
 
 window.onload = () => {
   setup();
@@ -44,12 +46,15 @@ async function setup() {
   const input = new KeyboardInput();
   const letterSpeaker = new LetterSpeaker();
   input.subscribe(EventType.CHARACTER_TYPED, letterSpeaker);
+
   const sm = new SoundManager();
   sm.setExtension('mp3');
   const timeStart = performance.now();
   const snd = await sm.create('stest/bs')
-  // snd.setPan(1);
-  // snd.setVolume(0.3);
+  const volume: Effect = snd.addEffect(EffectType.GAIN)
+  const pan: Effect = snd.addEffect(EffectType.PANNER)
+  pan.setValue(-1)
   snd.play();
+  volume.ramp(3000,0)
   console.log(`It took ${performance.now() - timeStart}`)
 }
