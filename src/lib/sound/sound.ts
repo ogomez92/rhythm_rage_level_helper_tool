@@ -49,6 +49,7 @@ export default class Sound {
   };
 
   private breakChain = () => {
+    this.playing = false;
     if (this.source) {
       this.source.stop();
       this.killEffects();
@@ -215,7 +216,7 @@ export default class Sound {
     const effect = this.effectProvider.createEffect(type);
     this.effects.push(effect);
 
-    if (this.source) {
+    if (this.playing) {
       this.makeAudioChain();
     }
 

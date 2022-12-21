@@ -1,6 +1,4 @@
 import * as dotenv from "dotenv";
-import * as fs from "fs";
-import path from "path";
 
 import EventType from "./lib/events/enums/event_type";
 import EventNotification from "./lib/events/interfaces/event_notification";
@@ -10,7 +8,6 @@ import SpeechManager from "@lib/speech/speech_manager";
 // import FileManager from "./managers/file_manager";
 import SoundManager from "@lib/sound/sound_manager";
 import TimeHelper from "./lib/helpers/time_helper";
-import Effect from "./lib/sound/interfaces/effect";
 import EffectType from "./lib/sound/enums/effect_type";
 
 window.onload = () => {
@@ -51,10 +48,6 @@ async function setup() {
   sm.setExtension('mp3');
   const timeStart = performance.now();
   const snd = await sm.create('stest/bs')
-  const volume: Effect = snd.addEffect(EffectType.GAIN)
-  const pan: Effect = snd.addEffect(EffectType.PANNER)
-  pan.setValue(-1)
-  snd.play();
-  volume.ramp(3000,0)
+
   console.log(`It took ${performance.now() - timeStart}`)
 }
