@@ -9,6 +9,7 @@ export default class SoundManager {
   private context: AudioContext;
   private basePath: string = __dirname;
   private sounds: SoundInformation[] = [];
+  private soundMap: Map<string, AudioBuffer> = new Map();
   private loadingPaths: string[] = [];
   private extension = 'ogg';
 
@@ -29,8 +30,10 @@ export default class SoundManager {
     buffer = this.getBufferAtPath(builtPath);
 
     if (buffer) {
+      console.log('I got a buffer that was already loaded')
       const sound = new Sound(buffer, this.context, builtPath, this);
       this.sounds.push({ buffer: buffer, path: builtPath });
+      this.soundMap.set(builtPath, buffer);
 
       return sound;
     } else {
@@ -40,6 +43,7 @@ export default class SoundManager {
         }
 
         buffer = this.getBufferAtPath(builtPath);
+        console.log('I got a buffer after a preload')
 
         if (!buffer) {
           throw new Error(`Unable to load sound from a preloading buffer at ${this.basePath}/${filePath}.${this.extension}`);
@@ -76,7 +80,7 @@ export default class SoundManager {
 
 
   private getBufferAtPath = (path: string): AudioBuffer | undefined => {
-    return this.sounds.find((sound) => sound.path === path)?.buffer;
+    return this.soundMap.get(path);
   };
 
   public freeSound = (sound: Sound) => {
@@ -85,6 +89,7 @@ export default class SoundManager {
         this.sounds[i].buffer = null;
         this.sounds[i] = null;
         this.sounds.splice(i, 1);
+        this.soundMap.delete(sound.getFilePath());
         break;
       }
     }
