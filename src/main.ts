@@ -1,5 +1,5 @@
 import * as dotenv from "dotenv";
-
+import * as path from 'path';
 import EventType from "./lib/events/enums/event_type";
 import EventNotification from "./lib/events/interfaces/event_notification";
 import EventSubscriber from "./lib/events/interfaces/event_subscriber";
@@ -9,6 +9,7 @@ import SpeechManager from "@lib/speech/speech_manager";
 import SoundManager from "@lib/sound/sound_manager";
 import TimeHelper from "./lib/helpers/time_helper";
 import EffectType from "./lib/sound/enums/effect_type";
+import Reverb from "./lib/sound/effects/reverb";
 
 window.onload = () => {
   setup();
@@ -45,9 +46,11 @@ async function setup() {
   input.subscribe(EventType.CHARACTER_TYPED, letterSpeaker);
 
   const sm = new SoundManager();
-  sm.setExtension('mp3');
+  sm.setExtension("mp3");
   const timeStart = performance.now();
-  const snd = await sm.create('stest/bs')
-
-  console.log(`It took ${performance.now() - timeStart}`)
+  const snd = await sm.create("stest/bs");
+  const reverb = snd.addEffect(EffectType.REVERB) as Reverb;
+  reverb.setImpulseResponseFromFile(path.join(sm.getBasePath(), 'stest/impulse.mp3'));
+  snd.play();
+  console.log(`It took ${performance.now() - timeStart}`);
 }

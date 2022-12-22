@@ -2,8 +2,8 @@ interface Effect {
     getNode():AudioNode;
     connect(node: AudioNode): Effect;
     disconnect(): void;
-    getValue(): number;
-    setValue(newValue: number): Effect;
+    getValue?(): number;
+    setValue?(newValue: number): Effect;
     ramp?(milliseconds: number, toValue: number): Promise<Effect>;
     sweep?(duration: number, speed: number, from: number, to: number): Promise<Effect>;
 }
