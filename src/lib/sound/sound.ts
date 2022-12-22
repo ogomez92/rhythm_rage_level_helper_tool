@@ -222,7 +222,13 @@ export default class Sound {
     return effect;
   };
 
-  public getDuration = () => this.buffer.duration * 1000;
+  public getDuration = (withPlaybackRateModifier = false) => {
+    if (!withPlaybackRateModifier) {
+      return this.buffer.duration * 1000;
+    } else {
+      return (this.buffer.duration * 1000) * this.pitch;
+    }
+  }
 
   public playWait = async (): Promise<Sound> => {
     this.play();
@@ -234,7 +240,5 @@ export default class Sound {
         }
       }, 50);
     });
-
-  }
-
+  };
 }
