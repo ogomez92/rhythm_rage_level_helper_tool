@@ -1,5 +1,5 @@
 import * as dotenv from "dotenv";
-import * as path from 'path';
+import * as path from "path";
 import EventType from "./lib/events/enums/event_type";
 import EventNotification from "./lib/events/interfaces/event_notification";
 import EventSubscriber from "./lib/events/interfaces/event_subscriber";
@@ -47,10 +47,11 @@ async function setup() {
 
   const sm = new SoundManager();
   sm.setExtension("mp3");
-  const timeStart = performance.now();
-  const snd = await sm.create("stest/bs");
-  const reverb = snd.addEffect(EffectType.REVERB) as Reverb;
-  reverb.setImpulseResponseFromFile(path.join(sm.getBasePath(), 'stest/impulse.mp3'));
+  const snd = await sm.createStream("stest/bs");
   snd.play();
-  console.log(`It took ${performance.now() - timeStart}`);
+  await TimeHelper.sleep(300);
+  const volume = await snd.addEffect(EffectType.GAIN);
+  volume.setValue(0.1);
+  await TimeHelper.sleep(500);
+  snd.seek(7000);
 }
