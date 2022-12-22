@@ -1,3 +1,4 @@
+import StreamedSound from "@lib/sound/streamed_sound";
 import Sound from "@lib/sound/sound";
 import path from 'path';
 import SoundInformation from "@lib/sound/interfaces/sound_information";
@@ -98,7 +99,7 @@ export default class SoundManager {
     }
   }
 
-  public createStream = (filePath: string, fullPathSpecified = false) => {
+  public createStream = (filePath: string, fullPathSpecified = false): StreamedSound => {
     let builtPath = path.join(this.basePath, filePath + `.${this.extension}`)
 
     if (fullPathSpecified) {
@@ -106,6 +107,8 @@ export default class SoundManager {
     }
 
     const decoderProvider = new DecoderProvider(this.context);
-    return decoderProvider.createHTMLStreamFromPath(builtPath);
+    const streamHTMLElement: HTMLAudioElement = decoderProvider.createHTMLStreamFromPath(builtPath);
+
+    return new StreamedSound(streamHTMLElement, this.context, builtPath)
   }
 }

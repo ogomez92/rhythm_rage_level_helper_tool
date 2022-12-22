@@ -28,7 +28,7 @@ export default class DecoderProvider {
         try {
             const decoder = new HTMLStreamer(this.context);
 
-            const audioElement = decoder.stream(filePath);
+            const audioElement: HTMLAudioElement = decoder.stream(filePath);
             console.log(`Decoding took ${performance.now() - start} ms.`)
             return audioElement;
         } catch (error) {
