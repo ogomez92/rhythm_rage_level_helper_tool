@@ -191,4 +191,19 @@ export default class StreamedSound {
 
     return effect;
   }
+
+  public getDuration = () => this.stream.currentTime * 1000;
+
+  public playWait = async (): Promise<StreamedSound> => {
+    this.play();
+    return new Promise((resolve) => {
+      const interval = setInterval(() => {
+        if (!this.isPlaying()) {
+          clearInterval(interval);
+          resolve(this);
+        }
+      }, 50);
+    });
+
+  }
 }

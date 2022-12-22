@@ -11,7 +11,7 @@ export default class Sound {
   private position = 0;
   private context: AudioContext;
   private playing = false;
-  private effectProvider: EffectProvider
+  private effectProvider: EffectProvider;
   private effects: Effect[];
   private tag: string;
   private pitch = 1.0;
@@ -25,7 +25,6 @@ export default class Sound {
     path: string,
     manager: SoundManager
   ) {
-
     this.buffer = buffer;
     this.context = context;
     this.filePath = path;
@@ -164,7 +163,7 @@ export default class Sound {
       return 0;
     }
 
-    return ((this.context.currentTime - this.startTime) * 1000) + this.position;
+    return (this.context.currentTime - this.startTime) * 1000 + this.position;
   };
 
   public seek = (position: number) => {
@@ -175,7 +174,7 @@ export default class Sound {
 
   public getTag = () => this.tag;
 
-  public setTag = (tag: string) => this.tag = tag;
+  public setTag = (tag: string) => (this.tag = tag);
 
   private addEffectsAndConnectToDestination = () => {
     if (this.effects.length == 0) {
@@ -190,7 +189,7 @@ export default class Sound {
     }
 
     this.effects[this.effects.length - 1].connect(this.context.destination);
-  }
+  };
 
   public removeEffect = (effect: Effect) => {
     const index = this.effects.indexOf(effect);
@@ -204,13 +203,13 @@ export default class Sound {
     if (this.source) {
       this.makeAudioChain();
     }
-  }
+  };
 
   private killEffects = () => {
     this.effects = [];
 
     this.makeAudioChain();
-  }
+  };
 
   public addEffect = (type: EffectType): Effect => {
     const effect = this.effectProvider.createEffect(type);
@@ -221,5 +220,21 @@ export default class Sound {
     }
 
     return effect;
+  };
+
+  public getDuration = () => this.buffer.duration * 1000;
+
+  public playWait = async (): Promise<Sound> => {
+    this.play();
+    return new Promise((resolve) => {
+      const interval = setInterval(() => {
+        if (!this.isPlaying()) {
+          clearInterval(interval);
+          resolve(this);
+        }
+      }, 50);
+    });
+
   }
+
 }
