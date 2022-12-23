@@ -11,7 +11,7 @@ export default class Sound {
   private position = 0;
   private context: AudioContext;
   private playing = false;
-  private effectProvider: EffectProvider
+  private effectProvider: EffectProvider;
   private effects: Effect[];
   private tag: string;
   private pitch = 1.0;
@@ -25,13 +25,13 @@ export default class Sound {
     path: string,
     manager: SoundManager
   ) {
-
     this.buffer = buffer;
     this.context = context;
     this.filePath = path;
     this.manager = manager;
     this.effectProvider = new EffectProvider(this.context);
     this.effects = [];
+    this.startTime = this.context.currentTime;
   }
 
   public getPitch = () => this.pitch;
@@ -52,16 +52,13 @@ export default class Sound {
     this.playing = false;
     if (this.source) {
       this.source.stop();
-      this.killEffects();
       this.source.disconnect();
     }
 
     this.source = null;
   };
 
-  public play = (position = 0): Sound => {
-    this.startTime = this.context.currentTime;
-
+  public play = (): Sound => {
     if (!this.buffer) {
       throw new Error(
         `This sound was previously destroyed and must be recreated`
@@ -74,8 +71,8 @@ export default class Sound {
     }
 
     this.makeAudioChain();
-    this.source.start(0, this.startTime - position);
-
+    this.source.start(0, this.position / 1000);
+    this.startTime = this.context.currentTime;
     this.playing = true;
     return this;
   };
@@ -105,7 +102,6 @@ export default class Sound {
   public stop = (): Sound => {
     this.playing = false;
     this.position = 0;
-
     if (!this.source) {
       return;
     }
@@ -141,10 +137,6 @@ export default class Sound {
   };
 
   private makeAudioChain = (): Sound => {
-    if (this.source) {
-      this.breakChain();
-    }
-
     this.source = this.context.createBufferSource();
     this.source.buffer = this.buffer;
     this.configureSource();
@@ -159,23 +151,40 @@ export default class Sound {
     this.source.playbackRate.value = this.pitch;
   };
 
-  public getCurrentTime = (): number => {
+  public getCurrentTime = (withPlaybackRateModifier = false): number => {
     if (!this.source) {
       return 0;
     }
 
-    return ((this.context.currentTime - this.startTime) * 1000) + this.position;
+    if (!this.playing) {
+      return this.position;
+    }
+
+    if (withPlaybackRateModifier) {
+      return (
+        this.position +
+        (this.context.currentTime - this.startTime) * 1000 * this.pitch
+      );
+    }
+
+    return this.position + (this.context.currentTime - this.startTime) * 1000;
   };
 
   public seek = (position: number) => {
     this.position = position;
-    this.stop();
-    this.play(this.startTime - position / 1000);
+
+    if (this.playing) {
+      this.source.stop();
+      this.makeAudioChain();
+      this.source.start(0, this.position / 1000);
+      this.startTime = this.context.currentTime;
+      this.playing = true;
+    }
   };
 
   public getTag = () => this.tag;
 
-  public setTag = (tag: string) => this.tag = tag;
+  public setTag = (tag: string) => (this.tag = tag);
 
   private addEffectsAndConnectToDestination = () => {
     if (this.effects.length == 0) {
@@ -190,7 +199,7 @@ export default class Sound {
     }
 
     this.effects[this.effects.length - 1].connect(this.context.destination);
-  }
+  };
 
   public removeEffect = (effect: Effect) => {
     const index = this.effects.indexOf(effect);
@@ -204,22 +213,72 @@ export default class Sound {
     if (this.source) {
       this.makeAudioChain();
     }
-  }
-
-  private killEffects = () => {
-    this.effects = [];
-
-    this.makeAudioChain();
-  }
+  };
 
   public addEffect = (type: EffectType): Effect => {
+    const playing = this.playing;
+
     const effect = this.effectProvider.createEffect(type);
     this.effects.push(effect);
+    this.pause();
+    this.makeAudioChain();
 
-    if (this.playing) {
-      this.makeAudioChain();
+    if (playing) {
+      this.play();
     }
 
     return effect;
-  }
+  };
+
+  public getDuration = (withPlaybackRateModifier = false) => {
+    if (!withPlaybackRateModifier) {
+      return this.buffer.duration * 1000;
+    } else {
+      return this.buffer.duration * 1000 * this.pitch;
+    }
+  };
+
+  public playWait = async (): Promise<Sound> => {
+    this.play();
+    return new Promise((resolve) => {
+      const interval = setInterval(() => {
+        if (!this.isPlaying()) {
+          clearInterval(interval);
+          resolve(this);
+        }
+      }, 50);
+    });
+  };
+
+  public pause = () => {
+    if (!this.playing) {
+      return;
+    }
+
+    this.position = this.getCurrentTime() * this.pitch;
+    this.source.stop();
+    this.playing = false;
+    this.breakChain();
+  };
+
+  public reverse = () => {
+    const newBuffer = this.context.createBuffer(
+      this.buffer.numberOfChannels,
+      this.buffer.length,
+      this.buffer.sampleRate
+    );
+
+    for (let channel = 0; channel < this.buffer.numberOfChannels; channel++) {
+      const nowBuffering = this.buffer.getChannelData(channel);
+      const reversed = nowBuffering.reverse();
+      newBuffer.copyToChannel(reversed, channel);
+    }
+
+    this.buffer = newBuffer;
+
+    if (this.playing) {
+      this.stop();
+      this.play();
+    }
+  };
 }

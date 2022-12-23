@@ -9,24 +9,20 @@ export default class StreamedSound {
   private position = 0;
   private context: AudioContext;
   private playing = false;
-  private effectProvider: EffectProvider
+  private effectProvider: EffectProvider;
   private effects: Effect[];
   private tag: string;
   private speed = 1.0;
   private isLooped = false;
   private filePath: string;
 
-  constructor(
-    stream: HTMLAudioElement,
-    context: AudioContext,
-    path: string
-  ) {
-
+  constructor(stream: HTMLAudioElement, context: AudioContext, path: string) {
     this.stream = stream;
     this.context = context;
     this.filePath = path;
     this.effectProvider = new EffectProvider(this.context);
     this.effects = [];
+    this.source = this.context.createMediaElementSource(this.stream);
   }
 
   public getSpeed = () => this.speed;
@@ -38,7 +34,7 @@ export default class StreamedSound {
       return;
     }
 
-    this.configureSource();
+    this.configureStream();
 
     return this;
   };
@@ -46,11 +42,8 @@ export default class StreamedSound {
   private breakChain = () => {
     this.playing = false;
     if (this.source) {
-      this.killEffects();
       this.source.disconnect();
     }
-
-    this.source = null;
   };
 
   public play = (): StreamedSound => {
@@ -63,7 +56,7 @@ export default class StreamedSound {
     }
 
     if (this.playing) {
-      this.configureSource();
+      this.configureStream();
       return;
     }
 
@@ -106,24 +99,19 @@ export default class StreamedSound {
     this.isLooped = newValue;
 
     if (this.source) {
-      this.configureSource();
+      this.configureStream();
     }
   };
 
   private makeAudioChain = (): StreamedSound => {
-    if (this.source) {
-      this.breakChain();
-    }
-
-    this.source = this.context.createMediaElementSource(this.stream);
-    this.configureSource();
+    this.configureStream();
     this.addEffectsAndConnectToDestination();
     return this;
   };
 
   public isPlaying = (): boolean => this.source && this.playing;
 
-  private configureSource = () => {
+  private configureStream = () => {
     this.stream.loop = this.isLooped;
     this.stream.playbackRate = this.speed;
   };
@@ -138,13 +126,12 @@ export default class StreamedSound {
 
   public seek = (position: number) => {
     this.position = position;
-    this.stop();
-    this.play();
+    this.stream.currentTime = position / 1000;
   };
 
   public getTag = () => this.tag;
 
-  public setTag = (tag: string) => this.tag = tag;
+  public setTag = (tag: string) => (this.tag = tag);
 
   private addEffectsAndConnectToDestination = () => {
     if (this.effects.length == 0) {
@@ -159,7 +146,7 @@ export default class StreamedSound {
     }
 
     this.effects[this.effects.length - 1].connect(this.context.destination);
-  }
+  };
 
   public removeEffect = (effect: Effect) => {
     const index = this.effects.indexOf(effect);
@@ -173,22 +160,45 @@ export default class StreamedSound {
     if (this.source) {
       this.makeAudioChain();
     }
-  }
-
-  private killEffects = () => {
-    this.effects = [];
-
-    this.makeAudioChain();
-  }
+  };
 
   public addEffect = (type: EffectType): Effect => {
+    const playing = this.playing;
+
     const effect = this.effectProvider.createEffect(type);
     this.effects.push(effect);
+    this.pause();
+    this.makeAudioChain();
 
-    if (this.playing) {
-      this.makeAudioChain();
+    if (playing) {
+      this.play();
     }
 
     return effect;
+  };
+
+  public getDuration = () => this.stream.currentTime * 1000;
+
+  public playWait = async (): Promise<StreamedSound> => {
+    this.play();
+    return new Promise((resolve) => {
+      const interval = setInterval(() => {
+        if (!this.isPlaying()) {
+          clearInterval(interval);
+          resolve(this);
+        }
+      }, 50);
+    });
+  };
+
+  public pause = () => {
+    this.playing = false;
+    this.position = this.stream.currentTime * 1000;
+
+    if (!this.source) {
+      return;
+    }
+
+    this.breakChain();
   }
 }
