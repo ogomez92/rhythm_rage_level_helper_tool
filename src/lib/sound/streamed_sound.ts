@@ -116,13 +116,8 @@ export default class StreamedSound {
     this.stream.playbackRate = this.speed;
   };
 
-  public getCurrentTime = (): number => {
-    if (!this.source) {
-      return 0;
-    }
+  public getCurrentTime = (): number => this.stream.currentTime * 1000;
 
-    return this.stream.currentTime;
-  };
 
   public seek = (position: number) => {
     this.position = position;
@@ -177,7 +172,13 @@ export default class StreamedSound {
     return effect;
   };
 
-  public getDuration = () => this.stream.currentTime * 1000;
+  public getDuration = () => {
+    if (!this.source) {
+      return 0;
+    }
+
+    return this.stream.duration * 1000;
+  }
 
   public playWait = async (): Promise<StreamedSound> => {
     this.play();
