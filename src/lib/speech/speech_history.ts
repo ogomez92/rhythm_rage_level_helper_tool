@@ -30,7 +30,7 @@ export default class SpeechHistory implements EventSubscriber {
                 if (positionToSpeak == 0) {
                     positionToSpeak = 10;
                 }
-                
+
                 this.speakBufferMessageAtPositionFromBottom(positionToSpeak);
             }
         }
@@ -91,9 +91,24 @@ export default class SpeechHistory implements EventSubscriber {
     public add = (text: string) => {
         this.speaker.speak(text);
         this.buffer.push(text);
+        this.cleanup();
     }
 
     public stop = () => this.speaker.stop();
 
     public getPosition = (): number => this.position;
+
+    public cleanup = () => {
+        if (this.buffer.length > 100) {
+            this.buffer.shift();
+        }
+    }
+
+    public destroy = () => {
+        this.input.unsubscribe(EventType.KEYBOARD_KEY_PRESSED, this);
+        this.input.destroy();
+        this.input = null;
+        this.speaker = null;
+        this.buffer = null;
+    }
 }
