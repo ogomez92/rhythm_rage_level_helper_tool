@@ -48,7 +48,7 @@ export default class SpeechManager {
   public destroy = () => {
     if (this.synth) {
       this.synth.destroy();
-      this.synth = undefined;
+      this.synth = null;
       this.synthType = undefined;
     }
   };
