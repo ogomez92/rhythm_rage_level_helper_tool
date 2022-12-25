@@ -89,8 +89,11 @@ export default class SoundManager {
         this.sounds[i].buffer = null;
         this.sounds[i] = null;
         this.sounds.splice(i, 1);
-        this.soundMap.delete(sound.getFilePath());
         break;
+      }
+
+      if (!this.isSoundPresent(sound)) {
+        this.soundMap.delete(sound.getFilePath());
       }
     }
   }
@@ -117,17 +120,18 @@ export default class SoundManager {
     return new StreamedSound(streamHTMLElement, this.context, builtPath)
   }
 
-  public destroy = (): Promise<void> => {
-    return new Promise((resolve) => {
-      this.context.close().then(() => {
-        this.context = null;
-        this.basePath = null;
-        this.sounds = null;
-        this.soundMap = null;
-        this.loadingPaths = null;
-        this.extension = null;
-        resolve();
-      });
-    });
+  public reset = (): void => {
+    this.sounds = [];
+    this.soundMap = new Map();
+    this.loadingPaths = [];
+  }
+  public isSoundPresent = (sound: Sound): boolean => {
+    for (let i = 0; i < this.sounds.length; i++) {
+      if (this.sounds[i].path === sound.getFilePath()) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }
