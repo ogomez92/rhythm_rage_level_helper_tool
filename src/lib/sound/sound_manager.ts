@@ -116,4 +116,18 @@ export default class SoundManager {
 
     return new StreamedSound(streamHTMLElement, this.context, builtPath)
   }
+
+  public destroy = (): Promise<void> => {
+    return new Promise((resolve) => {
+      this.context.close().then(() => {
+        this.context = null;
+        this.basePath = null;
+        this.sounds = null;
+        this.soundMap = null;
+        this.loadingPaths = null;
+        this.extension = null;
+        resolve();
+      });
+    });
+  }
 }
