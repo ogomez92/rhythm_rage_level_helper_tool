@@ -12,7 +12,7 @@ class EventManager {
 
         this.listeners.get(type).push(subscriber);
     }
-    
+
     public unsubscribe(type: EventType, subscriber: EventSubscriber) {
         if (!this.listeners.has(type)) {
             return;
@@ -39,6 +39,12 @@ class EventManager {
             subscriber.onNotificationReceived(formedNotification);
         }
 
+    }
+
+    public unsubscribeAll = () => {
+        this.listeners.forEach((value, key) => {
+            this.listeners.delete(key);
+        });
     }
 }
 

@@ -105,7 +105,6 @@ export default class SpeechHistory implements EventSubscriber {
     }
 
     public destroy = () => {
-        this.input.unsubscribe(EventType.KEYBOARD_KEY_PRESSED, this);
         this.input.destroy();
         this.input = null;
         this.speaker = null;
