@@ -21,6 +21,7 @@ export default class TextItem implements MenuItem {
     }
 
     public focus = () => {
+        console.log(this.text)
         this.speaker.speak(this.text);
     }
 
