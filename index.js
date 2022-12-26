@@ -21,7 +21,7 @@ const createWindow = () => {
       protocol: 'file:',
       slashes: true
     }));
-    mainWindow.webContents.openDevTools();
+    // mainWindow.webContents.openDevTools();
 };
 
 // This method will be called when Electron has finished
