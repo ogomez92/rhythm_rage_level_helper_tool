@@ -19,3 +19,4 @@ audioQuestion and textQuestion, textAlert and audioAlert
 question: y/n no menu for that
 menu shortcut event should be handled by menu and not each item
 audio items will share a sound with the intro and stuff which is passed to them via their constructor
+new UI, text entry instead of a menu item with characters
