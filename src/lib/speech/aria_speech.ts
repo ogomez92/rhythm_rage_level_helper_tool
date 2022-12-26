@@ -28,6 +28,7 @@ class AriaSpeechEngine implements SpeechEngine{
 
     public destroy = () => {
         this.HTMLElement.remove();
+        this.HTMLElement = null;
     }
 }
 
