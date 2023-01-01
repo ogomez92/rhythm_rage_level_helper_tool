@@ -5,18 +5,13 @@ and the sound wil be set via a method. setSound. Not by default.
 
 menu
 additional sounds for moving, intro, and have different items like tts, audio etc.
-allow first letter navigation, true false
-set additional shortcuts. shortcut is announced via speech with a delay
-each item can have shortcut or not
-
-itemHelp is triggered after a delay and it is optional in the menu item interface. announces shortcuts and how to use things like sliders
-menu is responsible for triggering speakHelp, not focus. Otherwise, things might overlap weirdly.
-make sure menu and all items are destroyed after menu is run
+menu: allow first letter navigation, true false
 
 make question and alert dialogs
 maybe scrollingtext and question can belong to the same class, ALertService or something
 audioQuestion and textQuestion, textAlert and audioAlert
 question: y/n no menu for that
 menu shortcut event should be handled by menu and not each item
-audio items will share a sound with the intro and stuff which is passed to them via their constructor
 new UI, text entry instead of a menu item with characters
+UI menu getValues which will return all sliders, checkboxes, etc which have a value in a json like object with the ID and value.
+implement events for menu moved
