@@ -11,7 +11,7 @@ import LocalizationService from "@lib/localization/localization_service";
 
 export default class Menu implements EventSubscriber {
     private items: MenuItem[];
-    private firstTimeNavigationAllowed: boolean;
+    private firstTimeNavigationAllowed = true;
     private input: KeyboardInput
     private escapeOptionID: string;
     private timeToWaitUntilHelp = 1250;
@@ -175,7 +175,7 @@ export default class Menu implements EventSubscriber {
         }
     }
 
-    public reset = (removeIntro = true) => {
+    private reset = (removeIntro = true) => {
         this.input.unsubscribeAll();
         this.selectedPositionID = null;
 
@@ -220,7 +220,7 @@ export default class Menu implements EventSubscriber {
 
     public getTag = (): string => this.tag;
 
-    public unfocus = () => {
+    private unfocus = () => {
         if (this.currentPosition >= 0) {
             this.items[this.currentPosition].unfocus();
         }
@@ -244,7 +244,7 @@ export default class Menu implements EventSubscriber {
 
     public setAllowFirstTimeNavigation = (newValue: boolean) => this.firstTimeNavigationAllowed = newValue;
 
-    public focusItemByFirstCharacterInID = (character: string) => {
+    private focusItemByFirstCharacterInID = (character: string) => {
         for (let i = 0; i < this.items.length; i++) {
             if (this.items[i].getID().startsWith(character)) {
                 if (this.currentPosition >= 0 && this.items[this.currentPosition].isSelectable()) {
