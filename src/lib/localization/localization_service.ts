@@ -43,10 +43,6 @@ export default class LocalizationService {
     }
 
     public static translate = (key: string, placeholders?: any) => {
-        if (!LocalizationService.translations) {
-            LocalizationService.loadJSONTranslations();
-        }
-
         let placeholderString = '';
 
         if (placeholders) {
@@ -55,6 +51,15 @@ export default class LocalizationService {
                 placeholderString += ` ${placeholderKey}: ${placeholderValue}`;
             });
         }
+
+        if (!LocalizationService.translations) {
+            try {
+                LocalizationService.loadJSONTranslations();
+            } catch {
+                return `${key} ${LocalizationService.currentLanguage}! ${placeholderString}`
+            }
+        }
+
 
         if (!LocalizationService.translations[LocalizationService.currentLanguage]) {
             Logger.appendToFile('translation_errors', `${key} missing language ${LocalizationService.currentLanguage}! ${placeholderString}`)
