@@ -30,7 +30,6 @@ export default class SoundManager {
     buffer = this.getBufferAtPath(builtPath);
 
     if (buffer) {
-      console.log('I got a buffer that was already loaded')
       const sound = new Sound(buffer, this.context, builtPath, this);
       this.sounds.push({ buffer: buffer, path: builtPath });
       this.soundMap.set(builtPath, buffer);
@@ -43,7 +42,6 @@ export default class SoundManager {
         }
 
         buffer = this.getBufferAtPath(builtPath);
-        console.log('I got a buffer after a preload')
 
         if (!buffer) {
           throw new Error(`Unable to load sound from a preloading buffer at ${this.basePath}/${filePath}.${this.extension}`);

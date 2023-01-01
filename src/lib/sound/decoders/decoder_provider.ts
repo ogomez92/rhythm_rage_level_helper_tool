@@ -15,7 +15,6 @@ export default class DecoderProvider {
             const decoder = new NativeDecoder(this.context);
 
             const audioBuffer = await decoder.decode(filePath);
-            console.log(`Decoding took ${performance.now() - start} ms.`)
             return audioBuffer;
         } catch (error) {
             throw new Error(`Unable to create buffer for ${filePath}: ${error}`);
@@ -29,7 +28,6 @@ export default class DecoderProvider {
             const decoder = new HTMLStreamer(this.context);
 
             const audioElement: HTMLAudioElement = decoder.stream(filePath);
-            console.log(`Decoding took ${performance.now() - start} ms.`)
             return audioElement;
         } catch (error) {
             throw new Error(`Unable to create buffer for ${filePath}: ${error}`);

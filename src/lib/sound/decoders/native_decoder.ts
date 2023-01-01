@@ -2,7 +2,6 @@ class NativeDecoder {
     context: AudioContext;
 
     constructor(context: AudioContext) {
-        console.log('using native webaudio decoder')
         this.context = context;
     }
 
