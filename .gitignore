@@ -5,3 +5,5 @@ bundle.*
 .env
 coverage
 stest
+logs
+*.log
