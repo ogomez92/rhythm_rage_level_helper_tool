@@ -7,7 +7,7 @@
       "@lib/*": ["lib/*"]
     },
     "sourceMap": true,
-    "noImplicitAny": true,
+    "noImplicitAny": false,
     "module": "commonjs",
     "target": "es2022"
   },
