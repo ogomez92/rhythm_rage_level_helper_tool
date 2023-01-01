@@ -8,7 +8,6 @@ describe('speech history', () => {
     let history: SpeechHistory;
     beforeEach(async () => {
         document.body.innerHTML = `        <div id="root"></div>        `;
-
         const manager = new SpeechManager(SpeechEngineType.ARIA);
 
         await manager.initialize();
@@ -30,8 +29,7 @@ describe('speech history', () => {
         document.dispatchEvent(event2);
 
         const ariaSpeechText = document.getElementById("ariaSpeech").innerText;
-
-        expect(ariaSpeechText).toMatch(/No message at position 1/);
+        expect(ariaSpeechText).toMatch(/position: 1/);
     })
 
     it('tries to access the 10th element without any elements added', () => {
@@ -49,7 +47,7 @@ describe('speech history', () => {
 
         const ariaSpeechText = document.getElementById("ariaSpeech").innerText;
 
-        expect(ariaSpeechText).toMatch(/No message at position 10/);
+        expect(ariaSpeechText).toMatch(/position: 10/);
     })
 
     it('Adds some messages and moves among them', () => {
@@ -143,7 +141,7 @@ describe('speech history', () => {
         }));
 
         ariaSpeechText = document.getElementById("ariaSpeech").innerText;
-        expect(ariaSpeechText).toMatch(/No message at position 5/)
+        expect(ariaSpeechText).toMatch(/position: 5/)
 
     })
 })

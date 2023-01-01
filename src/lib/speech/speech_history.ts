@@ -4,6 +4,7 @@ import EventType from "@lib/events/enums/event_type";
 import EventSubscriber from "@lib/events/interfaces/event_subscriber";
 import EventNotification from "@lib/events/interfaces/event_notification";
 import KeyboardKeycode from "@lib/input/enums/keyboard_keycode";
+import LocalizationService from "../localization/localization_service";
 
 export default class SpeechHistory implements EventSubscriber {
     private buffer: string[];
@@ -73,8 +74,7 @@ export default class SpeechHistory implements EventSubscriber {
             this.speaker.speak(this.buffer[position]);
         }
         else {
-            // Todo: Translate this
-            this.speaker.speak(`No message at position ${position}`);
+            this.speaker.speak(LocalizationService.translate('libSpeechHistoryNoMessageAtX', {position: position}));
         }
     }
 
@@ -84,7 +84,7 @@ export default class SpeechHistory implements EventSubscriber {
             this.speaker.speak(this.buffer[this.buffer.length - position]);
         }
         else {
-            this.speaker.speak(`No message at position ${position}`);
+            this.speaker.speak(LocalizationService.translate('libSpeechHistoryNoMessageAtX', {position: position}));
         }
     }
 

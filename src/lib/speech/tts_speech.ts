@@ -1,7 +1,8 @@
 import SpeechEngine from "@lib/speech/interfaces/speech_engine";
 import Language from "@lib/localization/enums/language";
+import LocalizationService from "@lib/localization/localization_service";
 
-const DEFAULT_FALLBACK_LANGUAGE = Language.ENGLISH;
+const LANGUAGE_USED = LocalizationService.getDefaultLanguage();
 
 class TTSSpeechEngine implements SpeechEngine {
   private synth: SpeechSynthesis;
@@ -11,7 +12,7 @@ class TTSSpeechEngine implements SpeechEngine {
   private voice: SpeechSynthesisVoice;
   private isReady = false;
 
-  constructor(language = DEFAULT_FALLBACK_LANGUAGE) {
+  constructor(language = LANGUAGE_USED) {
     this.language = language;
   }
 
