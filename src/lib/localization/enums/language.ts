@@ -1,5 +1,5 @@
 enum Language {
-  UNKNOWN = 'INVALID_LANGUAGE',
+  UNKNOWN = 'INVALID',
   SPANISH = "es",
   CATALAN = "ca",
   FRENCH = "fr",
