@@ -7,12 +7,16 @@ import EventNotification from "@lib/events/interfaces/event_notification";
 import EventType from "../events/enums/event_type";
 import KeyboardKeycode from "../input/enums/keyboard_keycode";
 import TimeHelper from "@lib/helpers/time_helper";
+import LocalizationService from "@lib/localization/localization_service";
 
 export default class Menu implements EventSubscriber {
     private items: MenuItem[];
+    private firstTimeNavigationAllowed: boolean;
     private input: KeyboardInput
+    private escapeOptionID: string;
     private timeToWaitUntilHelp = 1250;
     private itemHelpTimeout: number;
+    private tag: string;
     private currentPosition = -1;
     private introSound: Sound;
     private introText: string;
@@ -21,7 +25,6 @@ export default class Menu implements EventSubscriber {
     private selectSound: Sound;
     private selectedPositionID: string;
     private speaker: SpeechManager
-
 
     constructor(items: MenuItem[], speechManager: SpeechManager) {
         this.items = items;
@@ -79,7 +82,6 @@ export default class Menu implements EventSubscriber {
             this.playMoveSound();
         }
 
-        this.speaker.speak(this.currentPosition.toString());
         this.items[this.currentPosition].focus();
         this.prepareHelp();
     }
@@ -92,7 +94,7 @@ export default class Menu implements EventSubscriber {
         } else {
             this.playMoveSound();
         }
-        this.speaker.speak(this.currentPosition.toString());
+
         this.items[this.currentPosition].focus();
         this.prepareHelp();
     }
@@ -103,13 +105,17 @@ export default class Menu implements EventSubscriber {
         }
 
         this.itemHelpTimeout = window.setTimeout(() => {
-            this.items[this.currentPosition].speakHelp();
+            let helpText = this.items[this.currentPosition].getHelpText();
+            if (this.escapeOptionID == this.items[this.currentPosition].getID()) {
+                helpText += LocalizationService.translate('libMenuEscapeToSelect')
+            }
+            this.speaker.speak(helpText);
         }, this.timeToWaitUntilHelp);
     }
 
     public setTimeToWaitUntilHelp = (time: number) => this.timeToWaitUntilHelp = time;
 
-    public display = async (): Promise<string> => {
+    public showToUser = async (): Promise<string> => {
         if (this.introSound) {
             this.introSound.stop().play();
         }
@@ -119,6 +125,7 @@ export default class Menu implements EventSubscriber {
         }
 
         this.input.subscribe(EventType.KEYBOARD_KEY_PRESSED, this);
+        this.input.subscribe(EventType.CHARACTER_TYPED, this);
 
         this.selectedPositionID = null;
 
@@ -133,25 +140,43 @@ export default class Menu implements EventSubscriber {
     }
 
     public onNotificationReceived = (event: EventNotification) => {
-        const data = event.data;
+        if (event.type === EventType.KEYBOARD_KEY_PRESSED) {
+            const data = event.data;
 
-        switch (data) {
-            case KeyboardKeycode.ENTER:
-                if (this.currentPosition >= 0) {
-                    this.selectedPositionID = this.items[this.currentPosition].getID();
-                }
-                break;
-            case KeyboardKeycode.DOWNARROW:
-                this.moveBufferDown();
-                break;
-            case KeyboardKeycode.UPARROW:
-                this.moveBufferUp();
-                break;
+            switch (data) {
+                case KeyboardKeycode.ENTER:
+                    if (this.currentPosition >= 0 && this.items[this.currentPosition].isSelectable()) {
+                        this.unfocus();
+                        this.selectedPositionID = this.items[this.currentPosition].getID();
+                    }
+                    break;
+                case KeyboardKeycode.ESCAPE:
+                    if (this.escapeOptionID) {
+                        this.unfocus();
+                        this.selectedPositionID = this.escapeOptionID;
+                    }
+                    break;
+
+                case KeyboardKeycode.DOWNARROW:
+                    this.unfocus();
+                    this.moveBufferDown();
+                    break;
+                case KeyboardKeycode.UPARROW:
+                    this.unfocus();
+
+                    this.moveBufferUp();
+                    break;
+            }
+        } else if (event.type === EventType.CHARACTER_TYPED) {
+            this.selectViaShortcut(event.data as string);
+            if (this.firstTimeNavigationAllowed) {
+                this.focusItemByFirstCharacterInID(event.data as string);
+            }
         }
     }
 
     public reset = (removeIntro = true) => {
-        this.input.unsubscribe(EventType.KEYBOARD_KEY_PRESSED, this)
+        this.input.unsubscribeAll();
         this.selectedPositionID = null;
 
         if (this.itemHelpTimeout) {
@@ -179,6 +204,61 @@ export default class Menu implements EventSubscriber {
     private playSelectSound = () => {
         if (this.selectSound) {
             this.selectSound.stop().play();
+        }
+    }
+
+    private selectViaShortcut = (shortcut: string) => {
+        for (let i = 0; i < this.items.length; i++) {
+            if (this.items[i].getShortcut() === shortcut) {
+                this.selectedPositionID = this.items[i].getID();
+                break;
+            }
+        }
+    }
+
+    public setTag = (tag: string) => this.tag = tag;
+
+    public getTag = (): string => this.tag;
+
+    public unfocus = () => {
+        if (this.currentPosition >= 0) {
+            this.items[this.currentPosition].unfocus();
+        }
+    }
+
+    public setEscapeOptionById = (ID: string) => {
+        let found = false;
+        for (let i = 0; i < this.items.length; i++) {
+            if (this.items[i].getID() === ID) {
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            throw new Error(`The ID ${ID} is not part of this menu.`);
+        }
+
+        this.escapeOptionID = ID;
+    }
+
+    public setAllowFirstTimeNavigation = (newValue: boolean) => this.firstTimeNavigationAllowed = newValue;
+
+    public focusItemByFirstCharacterInID = (character: string) => {
+        for (let i = 0; i < this.items.length; i++) {
+            if (this.items[i].getID().startsWith(character)) {
+                if (this.currentPosition >= 0 && this.items[this.currentPosition].isSelectable()) {
+                    this.unfocus();
+                }
+
+                this.playMoveSound();
+                
+                this.currentPosition = i;
+
+                this.items[i].focus();
+                this.prepareHelp();
+                break;
+            }
         }
     }
 }

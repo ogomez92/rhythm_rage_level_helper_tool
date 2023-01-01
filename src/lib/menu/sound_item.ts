@@ -1,45 +1,44 @@
 import MenuItem from "@lib/menu/interfaces/menu_item";
-import SpeechManager from "@lib//speech/speech_manager";
+import Sound from "@lib/sound/sound";
 import KeyboardKey from "../input/enums/keyboard_key";
 import LocalizationService from "../localization/localization_service";
 
-export default class TextItem implements MenuItem {
+export default class SoundItem implements MenuItem {
     private text: string;
     private id: string;
-    private speaker: SpeechManager;
+    private sound: Sound;
     private shortcut: KeyboardKey | string;
 
-    constructor(id: string, text: string, speaker: SpeechManager, shortcut: string | KeyboardKey = null) {
+    constructor(id: string, sound: Sound, shortcut: string | KeyboardKey = null) {
         this.id = id;
-        this.speaker = speaker;
-        this.text = text;
+        this.sound = sound;
         this.shortcut = shortcut;
     }
 
     public getID = (): string => this.id;
 
     public destroy = () => {
-        this.speaker.destroy();
+        this.sound.destroy();
     }
 
     public focus = () => {
-        this.speaker.speak(this.text);
+        this.sound.stop().play();
     }
 
     public getHelpText= (): string => {
         let helpText = '';
         if (this.shortcut) {
-            helpText += `${LocalizationService.translate('libMenuShortcutKeyInfo', {key: this.shortcut})} `
+            helpText += `${LocalizationService.translate('libMenuShortcutKeyInfo', {key: this.shortcut})} `;
         }
 
-        helpText += LocalizationService.translate('libMenuTextItemSelectInfo', {itemName: this.text})
+        helpText += LocalizationService.translate('libMenuEnterToSelect');
 
         return helpText;
     }
 
     public getShortcut = (): string => this.shortcut;
 
-    public unfocus = () => this.speaker.speak('');
+    public unfocus = () => this.sound.stop();
 
     public isSelectable = (): boolean => true;
 }
