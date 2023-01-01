@@ -1,0 +1,7 @@
+{
+    "libMenuEscapeToSelect": "Pressing the escape key selects this option.",
+    "libMenuShortcutKeyInfo": "Press: {key}, to automatically select this option.",
+    "libMenuEnterToSelect": "Press Enter to select",
+    "libMenuTextItemSelectInfo": "Press Enter to select {itemName}",
+    "libSpeechHistoryNoMessageAtX": "No message at position {position}"
+}
