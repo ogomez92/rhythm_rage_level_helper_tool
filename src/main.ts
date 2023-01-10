@@ -5,6 +5,8 @@ import Menu from "@lib/menu/menu";
 import TextItem from "./lib/menu/text_item";
 import SpeechEngineType from "./lib/speech/enums/speech_engine_type";
 import FileManager from "./managers/file_manager";
+import * as path from 'path';
+import LevelPositionController from "@src/managers/level_position_controller";
 
 window.onload = () => {
   setup();
@@ -35,5 +37,11 @@ async function setup() {
 
   const menu = new Menu(items, speaker);
 
-  await menu.showToUser();
+  const soundName = await menu.showToUser();
+  try {
+    const levelSound = await sm.create(path.join(process.env.PACK_PATH, soundName), true)
+    const positionController = new LevelPositionController(levelSound, speaker)
+  } catch (error) {
+    speaker.speak(`Error loading the level! ${error}`)
+  }
 }
