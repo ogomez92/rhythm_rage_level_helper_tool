@@ -183,7 +183,7 @@ export default class Menu implements EventSubscriber {
             clearTimeout(this.itemHelpTimeout);
         }
 
-        if (removeIntro) {
+        if (removeIntro && this.introSound) {
             this.introSound.destroy();
             this.introSound = null;
         }
