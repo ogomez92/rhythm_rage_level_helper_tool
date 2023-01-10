@@ -116,6 +116,9 @@ export default class Menu implements EventSubscriber {
     public setTimeToWaitUntilHelp = (time: number) => this.timeToWaitUntilHelp = time;
 
     public showToUser = async (): Promise<string> => {
+        if (this.items.length < 1) {
+            throw new Error(`Items should not be empty before the menu is run!`)
+        }
         if (this.introSound) {
             this.introSound.stop().play();
         }
