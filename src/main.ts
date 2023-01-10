@@ -15,7 +15,6 @@ window.onload = () => {
 async function setup() {
   document.getElementById("app").focus();
   dotenv.config();
-
   const fileManager = new FileManager(process.env.PACK_PATH);
 
   const possibleLevels = fileManager
@@ -25,7 +24,6 @@ async function setup() {
       (file) =>
         file.getSize() > parseInt(process.env.MINIMUM_LEVEL_FILE_SIZE_IN_BYTES)
     );
-
   const speaker = new SpeechManager(SpeechEngineType.ARIA);
   await speaker.initialize();
   const sm = new SoundManager();

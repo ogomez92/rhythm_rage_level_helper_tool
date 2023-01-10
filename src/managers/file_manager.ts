@@ -1,22 +1,19 @@
 import * as fs from "fs";
+import * as path from 'path';
 import FileInfo from "@src/domain/file_info";
 
 export default class fileManager {
   private path: string;
 
-  constructor(path: string) {
-    try {
-      this.path = path;
-    } catch {
-      this.path = "";
-    }
+  constructor(folderPath: string) {
+    this.path = path.resolve(folderPath);
   }
 
   public getPath = () => this.path;
 
   public getFileList = (): FileInfo[] => {
     if (!this.path) {
-        return [];
+      return [];
     }
     const files = fs.readdirSync(this.path);
     const fileList: FileInfo[] = [];
