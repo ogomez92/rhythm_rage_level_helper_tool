@@ -13,7 +13,7 @@ window.onload = () => {
 };
 
 async function setup() {
-  // document.getElementById("app").focus();
+  document.getElementById("app").focus();
   dotenv.config();
   const fileManager = new FileManager(process.env.PACK_PATH);
 
@@ -24,7 +24,7 @@ async function setup() {
       (file) =>
         file.getSize() > parseInt(process.env.MINIMUM_LEVEL_FILE_SIZE_IN_BYTES)
     );
-  const speaker = new SpeechManager(SpeechEngineType.ARIA);
+  const speaker = new SpeechManager(SpeechEngineType.TTS);
   await speaker.initialize();
   const sm = new SoundManager();
   sm.setExtension("ogg");
@@ -34,7 +34,7 @@ async function setup() {
   );
 
   const menu = new Menu(items, speaker);
-  menu.setMoveSound(await sm.create('sounds/menuMove'))
+  menu.setMoveSound(await sm.create("sounds/menuMove"));
   const soundName = await menu.showToUser();
   try {
     const levelSound = await sm.create(
