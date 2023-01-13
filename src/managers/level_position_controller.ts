@@ -151,4 +151,8 @@ export default class LevelPositionController implements EventSubscriber {
     this.speaker.speak(roundedPositionString);
     ClipboardHelper.copyTextToClipboard(roundedPositionString);
   };
+
+  public pauseInput = () => this.input.pause();
+
+  public resumeInput = () => this.input.reset();
 }
