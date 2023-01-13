@@ -72,6 +72,11 @@ export default class Sound {
 
     this.makeAudioChain();
     this.source.start(0, this.position / 1000);
+    this.source.onended = () => {
+      this.playing = false;
+      this.position = 0;
+    };
+
     this.startTime = this.context.currentTime;
     this.playing = true;
     setTimeout(() => (this.playing = false), this.getDuration(true));
@@ -178,6 +183,11 @@ export default class Sound {
       this.source.stop();
       this.makeAudioChain();
       this.source.start(0, this.position / 1000);
+      this.source.onended = () => {
+        this.playing = false;
+        this.position = 0;
+      };
+
       this.startTime = this.context.currentTime;
       this.playing = true;
     }
