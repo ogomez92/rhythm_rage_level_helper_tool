@@ -84,10 +84,22 @@ class KeyboardInput extends EventManager {
       this.onKeyUp(event.key as unknown as KeyboardKeycode);
     });
 
-    this.unsubscribeAll()
+    this.unsubscribeAll();
   };
 
   public getKeysPressed = () => this._keysDown;
+
+  public pause = () => {
+    this.isInitialized = false;
+
+    document.removeEventListener("keydown", (event: KeyboardEvent) => {
+      this.onKeyDown(event.key as unknown as KeyboardKeycode);
+    });
+
+    document.removeEventListener("keyup", (event: KeyboardEvent) => {
+      this.onKeyUp(event.key as unknown as KeyboardKeycode);
+    });
+  };
 }
 
 export default KeyboardInput;
