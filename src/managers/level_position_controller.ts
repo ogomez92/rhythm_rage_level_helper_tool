@@ -12,6 +12,8 @@ export default class LevelPositionController implements EventSubscriber {
   private speaker: SpeechManager;
   private input: KeyboardInput;
   private position = 0;
+  private tempoInMS = 0;
+  private tempos: number[] = [];
 
   constructor(sound: Sound, speaker: SpeechManager) {
     this.sound = sound;
@@ -30,11 +32,16 @@ export default class LevelPositionController implements EventSubscriber {
     const key: KeyboardKeycode = event.data;
 
     if (key == KeyboardKeycode.SPACE) {
-      if (this.input.isPressed(KeyboardKeycode.CTRL) && this.sound.isPlaying()) {
+      if (
+        this.input.isPressed(KeyboardKeycode.CTRL) &&
+        this.sound.isPlaying()
+      ) {
         this.position = this.sound.getCurrentTime();
       }
 
       this.togglePlaybackState();
+    } else if (key == KeyboardKeycode.KEYH) {
+      this.tapTempo();
     }
   }
 
@@ -44,6 +51,21 @@ export default class LevelPositionController implements EventSubscriber {
     } else {
       this.sound.seek(this.position);
       this.sound.play();
+    }
+  };
+
+  public tapTempo = () => {
+    this.tempos.push(performance.now());
+    if (this.tempos.length >= 8) {
+      let sum = 0;
+      for (let i = 1; i < this.tempos.length; i++) {
+        sum += this.tempos[i] - this.tempos[i - 1];
+      }
+
+      this.tempoInMS = sum / (this.tempos.length - 1);
+      this.speaker.speak(`Tempo calculation done, ${Math.round(this.tempoInMS)} ms`);
+
+      this.tempos = [];
     }
   };
 }
