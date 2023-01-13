@@ -6,13 +6,15 @@ import KeyboardKeycode from "@lib/input/enums/keyboard_keycode";
 import EventType from "@lib/events/enums/event_type";
 import EventSubscriber from "@lib/events/interfaces/event_subscriber";
 import EventNotification from "@lib/events/interfaces/event_notification";
+import ClipboardHelper from "@lib/helpers/clipboard_helper";
 
 export default class LevelPositionController implements EventSubscriber {
   private sound: Sound;
   private speaker: SpeechManager;
   private input: KeyboardInput;
   private position = 0;
-  private tempoInMS = 0;
+  private startMarker = 0;
+  private tempoInMS = 1000;
   private tempos: number[] = [];
 
   constructor(sound: Sound, speaker: SpeechManager) {
@@ -30,18 +32,75 @@ export default class LevelPositionController implements EventSubscriber {
 
   onNotificationReceived(event: EventNotification): void {
     const key: KeyboardKeycode = event.data;
+    switch (key) {
+      case KeyboardKeycode.SPACE:
+        if (
+          this.input.isPressed(KeyboardKeycode.CTRL) &&
+          this.sound.isPlaying()
+        ) {
+          this.position = this.sound.getCurrentTime();
+        }
 
-    if (key == KeyboardKeycode.SPACE) {
-      if (
-        this.input.isPressed(KeyboardKeycode.CTRL) &&
-        this.sound.isPlaying()
-      ) {
-        this.position = this.sound.getCurrentTime();
+        this.togglePlaybackState();
+        break;
+      case KeyboardKeycode.KEYH:
+        this.tapTempo();
+        break;
+      case KeyboardKeycode.KEYM:
+        this.speaker.speak(`start marker set at ${this.position}`);
+        this.startMarker = this.position;
+        break;
+      case KeyboardKeycode.ENTER:
+        this.speakAndCopyTempo();
+        break;
+      case KeyboardKeycode.RIGHTARROW: {
+        let multiplier = 1;
+        if (this.input.isPressed(KeyboardKeycode.SHIFT)) {
+          multiplier += 4;
+        }
+        if (this.input.isPressed(KeyboardKeycode.ALT)) {
+          multiplier += 9;
+        }
+
+        this.increasePositionBy(5, multiplier);
+        break;
       }
+      case KeyboardKeycode.LEFTARROW: {
+        let multiplier = 1;
+        if (this.input.isPressed(KeyboardKeycode.SHIFT)) {
+          multiplier += 4;
+        }
+        if (this.input.isPressed(KeyboardKeycode.CTRL)) {
+          multiplier += 9;
+        }
 
-      this.togglePlaybackState();
-    } else if (key == KeyboardKeycode.KEYH) {
-      this.tapTempo();
+        this.decreasePositionBy(5, multiplier);
+        break;
+      }
+      case KeyboardKeycode.PAGEDOWN: {
+        let multiplier = 1;
+        if (this.input.isPressed(KeyboardKeycode.SHIFT)) {
+          multiplier += 3;
+        }
+        if (this.input.isPressed(KeyboardKeycode.ALT)) {
+          multiplier += 7;
+        }
+
+        this.increasePositionBy(this.tempoInMS, multiplier);
+        break;
+      }
+      case KeyboardKeycode.PAGEUP: {
+        let multiplier = 1;
+        if (this.input.isPressed(KeyboardKeycode.SHIFT)) {
+          multiplier += 3;
+        }
+        if (this.input.isPressed(KeyboardKeycode.ALT)) {
+          multiplier += 7;
+        }
+
+        this.decreasePositionBy(this.tempoInMS, multiplier);
+        break;
+      }
     }
   }
 
@@ -63,9 +122,33 @@ export default class LevelPositionController implements EventSubscriber {
       }
 
       this.tempoInMS = sum / (this.tempos.length - 1);
-      this.speaker.speak(`Tempo calculation done, ${Math.round(this.tempoInMS)} ms`);
+      this.speaker.speak(
+        `Tempo calculation done, ${Math.round(this.tempoInMS)} ms`
+      );
 
       this.tempos = [];
     }
+  };
+
+  public increasePositionBy = (amount: number, multiplier = 1) => {
+    this.position += amount * multiplier;
+    if (this.position > this.sound.getDuration()) {
+      this.position = this.sound.getDuration();
+    }
+    this.sound.seek(this.position);
+  };
+
+  public decreasePositionBy = (amount: number, multiplier = 1) => {
+    this.position -= amount * multiplier;
+    if (this.position < this.startMarker) {
+      this.position = this.startMarker;
+    }
+    this.sound.seek(this.position);
+  };
+
+  public speakAndCopyTempo = () => {
+    const roundedPositionString = Math.ceil(this.position).toString();
+    this.speaker.speak(roundedPositionString);
+    ClipboardHelper.copyTextToClipboard(roundedPositionString);
   };
 }

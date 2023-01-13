@@ -49,11 +49,11 @@ export default class Sound {
   };
 
   private breakChain = () => {
-    this.playing = false;
     if (this.source) {
       this.source.stop();
       this.source.disconnect();
     }
+    this.playing = false;
 
     this.source = null;
   };
@@ -74,7 +74,7 @@ export default class Sound {
     this.source.start(0, this.position / 1000);
     this.startTime = this.context.currentTime;
     this.playing = true;
-    setTimeout(() => this.playing = false, this.getDuration(true));
+    setTimeout(() => (this.playing = false), this.getDuration(true));
     return this;
   };
 
