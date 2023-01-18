@@ -26,6 +26,7 @@ export default class LevelPositionController implements EventSubscriber {
     this.speaker.speak(
       `Loaded. Total time is ${time.minutes} minutes, ${time.seconds} seconds`
     );
+
     this.input = new KeyboardInput();
     this.input.subscribe(EventType.KEYBOARD_KEY_PRESSED, this);
   }
@@ -101,13 +102,26 @@ export default class LevelPositionController implements EventSubscriber {
         this.decreasePositionBy(this.tempoInMS, multiplier);
         break;
       }
+      case KeyboardKeycode.HOME:
+        this.position = this.startMarker;
+        this.sound.seek(this.position);
+        break;
+      case KeyboardKeycode.END:
+        this.position = this.sound.getDuration();
+        this.sound.seek(this.position);
+        break;
     }
   }
 
   private togglePlaybackState = () => {
     if (this.sound.isPlaying()) {
-      this.sound.pause();
+      this.sound.stop();
     } else {
+      if (this.position >= this.sound.getDuration()) {
+        this.speaker.speak("jump to start marker");
+        this.position = this.startMarker;
+      }
+      
       this.sound.seek(this.position);
       this.sound.play();
     }

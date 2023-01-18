@@ -50,6 +50,7 @@ export default class Sound {
 
   private breakChain = () => {
     if (this.source) {
+      this.source.onended = null;
       this.source.stop();
       this.source.disconnect();
     }
@@ -74,12 +75,10 @@ export default class Sound {
     this.source.start(0, this.position / 1000);
     this.source.onended = () => {
       this.playing = false;
-      this.position = 0;
     };
 
     this.startTime = this.context.currentTime;
     this.playing = true;
-    setTimeout(() => (this.playing = false), this.getDuration(true));
     return this;
   };
 
@@ -108,12 +107,13 @@ export default class Sound {
   public stop = (): Sound => {
     this.playing = false;
     this.position = 0;
+
     if (!this.source) {
       return this;
     }
 
+    this.source.onended = null;
     this.source.stop();
-
     this.breakChain();
 
     return this;
@@ -121,6 +121,7 @@ export default class Sound {
 
   public destroy = () => {
     if (this.source) {
+      this.source.onended = null;
       this.source.stop();
       this.breakChain();
     }
@@ -177,19 +178,12 @@ export default class Sound {
   };
 
   public seek = (position: number) => {
-    this.position = position;
-
     if (this.playing) {
-      this.source.stop();
-      this.makeAudioChain();
-      this.source.start(0, this.position / 1000);
-      this.source.onended = () => {
-        this.playing = false;
-        this.position = 0;
-      };
-
-      this.startTime = this.context.currentTime;
-      this.playing = true;
+      this.stop();
+      this.position = position;
+      this.play();
+    } else {
+      this.position = position;
     }
   };
 
@@ -267,6 +261,7 @@ export default class Sound {
     }
 
     this.position = this.getCurrentTime() * this.pitch;
+    this.source.onended = null;
     this.source.stop();
     this.playing = false;
     this.breakChain();
