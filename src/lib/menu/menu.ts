@@ -14,7 +14,7 @@ export default class Menu implements EventSubscriber {
     private firstTimeNavigationAllowed = true;
     private input: KeyboardInput
     private escapeOptionID: string;
-    private timeToWaitUntilHelp = 1250;
+    private timeToWaitUntilHelp = 1500;
     private itemHelpTimeout: number;
     private tag: string;
     private currentPosition = -1;
