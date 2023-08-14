@@ -24,20 +24,22 @@ async function setup() {
       (file) =>
         file.getSize() > parseInt(process.env.MINIMUM_LEVEL_FILE_SIZE_IN_BYTES)
     );
-  const speaker = new SpeechManager(SpeechEngineType.TTS);
+
+  const speaker = new SpeechManager(SpeechEngineType.ARIA);
   await speaker.initialize();
-  const sm = new SoundManager();
-  sm.setExtension("ogg");
+  
+  const soundManager = new SoundManager();
+  soundManager.setExtension("ogg");
 
   const items: TextItem[] = possibleLevels.map(
     (level) => new TextItem(level.getName(), level.getName(), speaker)
   );
 
   const menu = new Menu(items, speaker);
-  menu.setMoveSound(await sm.create("sounds/menuMove"));
+  menu.setMoveSound(await soundManager.create("sounds/menuMove"));
   const soundName = await menu.showToUser();
   try {
-    const levelSound = await sm.create(
+    const levelSound = await soundManager.create(
       path.join(process.env.PACK_PATH, soundName),
       true
     );
